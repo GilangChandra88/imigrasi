@@ -326,7 +326,7 @@ export default function SuratPerintah() {
                     onChange={e => setDocData({...docData, nomor: e.target.value})}
                     className="font-bold text-base outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent text-center w-64"
                   />
-                  <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200">
+                  <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200 print:hidden">
                     SET NOMOR
                   </button>
                 </div>
@@ -344,7 +344,7 @@ export default function SuratPerintah() {
                   value={docData.menimbang}
                   onChange={e => setDocData({...docData, menimbang: e.target.value})}
                   onClick={() => setActiveField('menimbang')}
-                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 rounded min-h-[80px] leading-relaxed ${activeField === 'menimbang' ? 'ring-2 ring-indigo-200 bg-indigo-50/30' : ''}`}
+                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[80px] leading-relaxed ${activeField === 'menimbang' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
                 />
               </div>
 
@@ -356,7 +356,7 @@ export default function SuratPerintah() {
                   value={docData.dasar}
                   onChange={e => setDocData({...docData, dasar: e.target.value})}
                   onClick={() => setActiveField('dasar')}
-                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 rounded min-h-[100px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30' : ''}`}
+                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[100px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
                 />
               </div>
 
@@ -410,7 +410,7 @@ export default function SuratPerintah() {
                   value={docData.untuk}
                   onChange={e => setDocData({...docData, untuk: e.target.value})}
                   onClick={() => setActiveField('untuk')}
-                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 rounded min-h-[150px] leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30' : ''}`}
+                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[150px] leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
                 />
               </div>
 
