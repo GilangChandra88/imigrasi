@@ -311,12 +311,12 @@ export default function SuratPerintah() {
           </div>
         </div>
 
-                {/* MIDDLE PANEL: Main View Area */}
+        {/* MIDDLE PANEL: Main View Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/50 print:p-0 print:bg-transparent print:overflow-visible print:block">
           
           {/* FORM VIEW */}
           {viewMode === 'form' && (
-            <div className="bg-white shadow-sm rounded-xl border border-slate-200 w-full max-w-3xl p-8 flex flex-col gap-6 print:hidden">
+            <div className="bg-white shadow-sm rounded-xl border border-slate-200 w-full max-w-3xl p-8 flex flex-col gap-6 print:hidden h-fit">
               <h2 className="text-xl font-bold text-slate-800 border-b border-slate-100 pb-4">Isi Data Surat Perintah</h2>
               
               <div className="flex flex-col gap-5">
@@ -381,6 +381,7 @@ export default function SuratPerintah() {
             </div>
           )}
 
+          {/* DOCUMENT PREVIEW */}
           <div 
             className={`bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex-col text-slate-900 relative print:shadow-none print:max-w-none print:w-full print:min-h-0 print:p-0 ${viewMode === 'document' ? 'flex' : 'hidden print:flex'}`}
             style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '16px' }}
@@ -417,159 +418,149 @@ export default function SuratPerintah() {
               </div>
             </div>
 
-            {/* Isi Surat Layout Grid */}
-            <div className="grid grid-cols-[100px_1fr] gap-4 text-sm leading-relaxed text-justify">
+            {/* Isi Surat */}
+            <div className="flex-1 flex flex-col gap-6 text-justify">
               
-              {/* Menimbang */}
-              <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('menimbang')}>Menimbang</div>
-              <div className="relative group flex items-start">
-                <span className="mr-2 pt-1">:</span>
-                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                  value={docData.menimbang}
-                  onChange={e => setDocData({...docData, menimbang: e.target.value})}
-                  onClick={() => setActiveField('menimbang')}
-                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[80px] leading-relaxed ${activeField === 'menimbang' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
-                />
-              </div>
-
-              {/* Dasar */}
-              <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('dasar')}>Dasar</div>
-              <div className="relative group flex items-start">
-                <span className="mr-2 pt-1">:</span>
-                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                  value={docData.dasar}
-                  onChange={e => setDocData({...docData, dasar: e.target.value})}
-                  onClick={() => setActiveField('dasar')}
-                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[100px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
-                />
-              </div>
-
-              {/* Teks Menugaskan */}
-              <div className="col-span-2 text-center font-bold my-4 tracking-widest">
-                M E N U G A S K A N :
-              </div>
-
-              {/* Kepada (Pegawai) */}
-              <div className="font-semibold pt-1">Kepada</div>
-              <div className="flex items-start">
-                <span className="mr-2 pt-1">:</span>
-                <div className="w-full p-1">
-                  {docData.kepada.length === 0 ? (
-                    <div className="text-slate-400 italic bg-red-50 p-2 rounded border border-red-100 text-xs font-sans">
-                      * Silakan pilih pegawai dari panel sebelah kiri
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {docData.kepada.map((k, index) => (
-                        <div key={k.id} className="flex group relative">
-                          <span className="w-6">{index + 1}.</span>
-                          <div className="flex-1 grid grid-cols-[100px_1fr] gap-x-2">
-                            <span>Nama</span>
-                            <span className="font-semibold">: {k.nama}</span>
-                            
-                            <span>NIP</span>
-                            <span>: {k.nip}</span>
-                            
-                            <span>Pangkat / Gol.</span>
-                            <span>: {k.pangkat || '-'}</span>
-                            
-                            <span>Jabatan</span>
-                            <span>: {k.jabatan || '-'}</span>
-                          </div>
-                          <button onClick={() => handleRemoveKepada(k.id)} className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-50 p-1 rounded font-sans">
-                            <FaTimes />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              <div className="grid grid-cols-[100px_1fr] gap-4">
+                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('menimbang')}>Menimbang</div>
+                <div className="relative group flex items-start">
+                  <span className="mr-2 pt-1">:</span>
+                  <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                    value={docData.menimbang}
+                    onChange={e => setDocData({...docData, menimbang: e.target.value})}
+                    onClick={() => setActiveField('menimbang')}
+                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[80px] leading-relaxed ${activeField === 'menimbang' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
+                  />
                 </div>
-              </div>
 
-              {/* Untuk */}
-              <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('untuk')}>Untuk</div>
-              <div className="relative group flex items-start">
-                <span className="mr-2 pt-1">:</span>
-                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                  value={docData.untuk}
-                  onChange={e => setDocData({...docData, untuk: e.target.value})}
-                  onClick={() => setActiveField('untuk')}
-                  className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[150px] leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
-                />
-              </div>
-
-            </div>
-
-            {/* Footer / Tanda Tangan */}
-            <div className="mt-16 grid grid-cols-2">
-              <div>
-                {/* QR Code Placeholder */}
-                <div className="w-24 h-24 bg-slate-100 border-2 border-slate-300 mt-12 flex items-center justify-center text-xs text-slate-400 font-sans text-center p-2">QR Code TTE</div>
-              </div>
-              <div className="text-sm">
-                <div className="grid grid-cols-[100px_1fr] gap-1 mb-2">
-                  <span>Dikeluarkan di</span>
-                  <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32" /></span>
-                  
-                  <span>Pada Tanggal</span>
-                  <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs" /></span>
-                </div>
-                <div className="font-bold mb-16">
-                  KEPALA KANTOR,
-                </div>
-                <div>
-                  <input 
-                    value={docData.penandatangan} 
-                    onChange={e=>setDocData({...docData, penandatangan: e.target.value})} 
-                    className="font-bold underline outline-none border-transparent hover:bg-slate-50 focus:bg-indigo-50 bg-transparent w-full" 
+                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('dasar')}>Dasar</div>
+                <div className="relative group flex items-start">
+                  <span className="mr-2 pt-1">:</span>
+                  <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                    value={docData.dasar}
+                    onChange={e => setDocData({...docData, dasar: e.target.value})}
+                    onClick={() => setActiveField('dasar')}
+                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[100px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
                   />
                 </div>
               </div>
-            </div>
 
+              <div className="text-center font-bold tracking-widest my-4">M E N U G A S K A N :</div>
+
+              <div className="grid grid-cols-[100px_1fr] gap-4">
+                <div className="font-semibold pt-1">Kepada</div>
+                <div className="flex">
+                  <span className="mr-2 pt-1">:</span>
+                  <div className="flex-1 flex flex-col gap-4 pt-1">
+                    {docData.kepada.map((p, idx) => (
+                      <div key={p.id} className="grid grid-cols-[20px_1fr] gap-2 group relative">
+                        <span>{idx + 1}.</span>
+                        <div className="grid grid-cols-[100px_1fr] gap-2">
+                          <span>Nama</span>
+                          <span className="font-bold uppercase">: {p.nama}</span>
+                          <span>NIP</span>
+                          <span>: {p.nip}</span>
+                          <span>Pangkat / Gol.</span>
+                          <span>: {p.pangkat}</span>
+                          <span>Jabatan</span>
+                          <span>: {p.jabatan}</span>
+                        </div>
+                        <button onClick={() => handleRemoveKepada(p.id)} className="absolute right-0 top-0 text-rose-500 opacity-0 group-hover:opacity-100 hover:bg-rose-50 p-1 rounded print:hidden"><FaTrash size={12} /></button>
+                      </div>
+                    ))}
+                    {docData.kepada.length === 0 && (
+                      <div className="text-slate-400 italic text-sm py-2">Belum ada pegawai dipilih...</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('untuk')}>Untuk</div>
+                <div className="relative group flex items-start">
+                  <span className="mr-2 pt-1">:</span>
+                  <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                    value={docData.untuk}
+                    onChange={e => setDocData({...docData, untuk: e.target.value})}
+                    onClick={() => setActiveField('untuk')}
+                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[150px] leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-10">
+                <div className="w-[300px] flex gap-4">
+                  <div className="w-24 h-24 bg-slate-100 border-2 border-slate-300 mt-12 flex items-center justify-center text-xs text-slate-400 font-sans text-center p-2">QR Code TTE</div>
+                  <div className="flex-1">
+                    <div className="text-sm">
+                      <div className="grid grid-cols-[100px_1fr] gap-1 mb-2">
+                        <span>Dikeluarkan di</span>
+                        <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32" /></span>
+                        
+                        <span>Pada Tanggal</span>
+                        <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs" /></span>
+                      </div>
+                      <div className="font-bold mb-16 uppercase">KEPALA KANTOR,</div>
+                      <div className="font-bold underline">
+                        <input value={docData.penandatangan} onChange={e=>setDocData({...docData, penandatangan: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-full text-center" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
 
         {/* RIGHT PANEL: Suggestions */}
-        <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 print:hidden">
-          <div className="p-4 border-b border-slate-100 bg-indigo-50/50">
-            <h2 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
-              Suggestion Box
-            </h2>
-            <p className="text-xs text-indigo-600/80 font-medium">Bagian terpilih: <strong className="uppercase bg-indigo-100 px-1 rounded">{activeField}</strong></p>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {activeSugesti.length === 0 ? (
-              <div className="text-center p-6 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-xl">
-                Belum ada sugesti untuk bagian {activeField.toUpperCase()}.
-              </div>
-            ) : (
-              activeSugesti.map(s => (
-                <div key={s.id} className="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all group relative cursor-pointer" onClick={() => handleAddSugestiToDoc(s.teks)}>
-                  <p className="text-xs text-slate-600 line-clamp-4 leading-relaxed">{s.teks}</p>
-                  <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 flex gap-1">
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteSugesti(s.id); }} className="p-1.5 bg-white text-rose-500 hover:bg-rose-50 rounded-lg shadow-sm border border-slate-200"><FaTrash size={10} /></button>
-                  </div>
-                  <div className="mt-2 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Klik untuk menambahkan</div>
-                </div>
-              ))
-            )}
-          </div>
+        <div className={`bg-white border-l border-slate-200 flex flex-col shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-20 print:hidden transition-all duration-300 relative ${isSugestiOpen ? 'w-80' : 'w-0'}`}>
+          <button 
+            onClick={() => setIsSugestiOpen(!isSugestiOpen)}
+            className="absolute -left-9 top-1/2 -translate-y-1/2 bg-white border border-slate-200 border-r-0 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] p-2.5 rounded-l-xl text-slate-500 hover:text-indigo-600 transition-colors z-30 flex items-center justify-center cursor-pointer"
+            title={isSugestiOpen ? "Tutup panel sugesti" : "Buka panel sugesti"}
+          >
+            {isSugestiOpen ? <FaChevronRight size={14} /> : <FaChevronLeft size={14} />}
+          </button>
 
-          <div className="p-4 border-t border-slate-200 bg-slate-50">
-            <form onSubmit={handleSaveNewSugesti} className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-500">TAMBAH SUGESTI BARU</label>
-              <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                value={newSugesti}
-                onChange={e => setNewSugesti(e.target.value)}
-                placeholder={`Ketik sugesti untuk ${activeField}...`}
-                className="w-full text-xs py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20"
-              />
-              <button type="submit" className="bg-white border border-indigo-200 text-indigo-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                <FaPlus size={12} /> Simpan Sugesti
-              </button>
-            </form>
+          <div className={`flex-1 flex flex-col w-80 overflow-hidden transition-opacity duration-300 ${isSugestiOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <div className="p-4 border-b border-slate-100 bg-indigo-50/50 shrink-0">
+              <h2 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                Suggestion Box
+              </h2>
+              <p className="text-xs text-indigo-600/80 font-medium">Bagian terpilih: <strong className="uppercase bg-indigo-100 px-1 rounded">{activeField}</strong></p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {activeSugesti.length === 0 ? (
+                <div className="text-center p-6 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                  Belum ada sugesti untuk bagian {activeField.toUpperCase()}.
+                </div>
+              ) : (
+                activeSugesti.map(s => (
+                  <div key={s.id} className="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all group relative cursor-pointer" onClick={() => handleAddSugestiToDoc(s.teks)}>
+                    <p className="text-xs text-slate-600 line-clamp-4 leading-relaxed">{s.teks}</p>
+                    <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                      <button onClick={(e) => { e.stopPropagation(); handleDeleteSugesti(s.id); }} className="p-1.5 bg-white text-rose-500 hover:bg-rose-50 rounded-lg shadow-sm border border-slate-200"><FaTrash size={10} /></button>
+                    </div>
+                    <div className="mt-2 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Klik untuk menambahkan</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-200 bg-slate-50 shrink-0">
+              <form onSubmit={handleSaveNewSugesti} className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-slate-500">TAMBAH SUGESTI BARU</label>
+                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                  value={newSugesti}
+                  onChange={e => setNewSugesti(e.target.value)}
+                  placeholder={`Ketik sugesti untuk ${activeField}...`}
+                  className="w-full text-xs py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none min-h-[80px]"
+                />
+                <button type="submit" className="w-full bg-indigo-50 text-indigo-700 py-2 rounded-lg font-bold text-xs hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2">
+                  <FaPlus size={10} /> Simpan Sugesti
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
@@ -577,5 +568,3 @@ export default function SuratPerintah() {
     </div>
   );
 }
-
-
