@@ -309,12 +309,15 @@ export default function SuratPerintah() {
       {/* 3-Column Layout */}
       <div className="flex-1 flex min-h-0 print:h-auto print:block">
         
-        {/* LEFT PANEL: Pegawai List */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 print:hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h2 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
-              Pilih Pegawai (Ditugaskan)
+        {/* LEFT PANEL: Pegawai List (Sliding) */}
+        <div className={`bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 print:hidden transition-all duration-300 ${pegawaiPanelMode ? 'w-80 ml-0' : 'w-0 overflow-hidden border-none'}`}>
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center w-80">
+            <h2 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+              {pegawaiPanelMode === 'penandatangan' ? 'Pilih Penandatangan' : 'Pilih Pegawai (Kepada)'}
             </h2>
+            <button onClick={() => setPegawaiPanelMode(null)} className="p-2 bg-white text-slate-400 hover:text-rose-500 rounded-lg shadow-sm border border-slate-200"><FaTimes size={12} /></button>
+          </div>
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50 w-80">
             <div className="relative">
               <FaSearch className="absolute left-3 top-3 text-slate-400" size={14} />
               <input 
@@ -326,11 +329,21 @@ export default function SuratPerintah() {
               />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 w-80">
             {filteredPegawai.map(k => {
-              const isSelected = docData.kepada.find(selected => selected.id === k.id);
+              const isSelected = pegawaiPanelMode === 'kepada' 
+                ? docData.kepada.find(selected => selected.id === k.id)
+                : docData.penandatangan === k.nama;
+                
               return (
-                <div key={k.id} className={`p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-300'}`} onClick={() => isSelected ? handleRemoveKepada(k.id) : handleAddKepada(k)}>
+                <div key={k.id} className={`p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-300'}`} onClick={() => {
+                  if (pegawaiPanelMode === 'kepada') {
+                    isSelected ? handleRemoveKepada(k.id) : handleAddKepada(k);
+                  } else if (pegawaiPanelMode === 'penandatangan') {
+                    setDocData({...docData, penandatangan: k.nama});
+                    setPegawaiPanelMode(null);
+                  }
+                }}>
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-bold text-slate-800 text-sm leading-tight mb-0.5">{k.nama}</p>
@@ -420,10 +433,10 @@ export default function SuratPerintah() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-slate-600 flex justify-between items-center">
-                    <span>Kepada (Pegawai yang ditugaskan)</span>
-                    <span className="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Pilih dari panel kiri</span>
-                  </label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-bold text-slate-600">Kepada (Pegawai yang ditugaskan)</label>
+                    <button onClick={() => setPegawaiPanelMode('kepada')} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"><FaPlus size={10} /> Tambah Pegawai</button>
+                  </div>
                   <div className={`flex flex-col gap-2 p-3 border rounded-lg transition-colors ${getValidationClass(docData.kepada, false)}`}>
                     {docData.kepada.length === 0 && <div className="text-sm text-slate-400 italic p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">Belum ada pegawai yang dipilih. Klik tombol Tambah Pegawai di atas.</div>}
                     {docData.kepada.map(k => (
@@ -487,10 +500,13 @@ export default function SuratPerintah() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-slate-600">Penandatangan</label>
-                  <input type="text" value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.penandatangan, false)}`} />
-                </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-bold text-slate-600">Penandatangan</label>
+                      <button onClick={() => setPegawaiPanelMode('penandatangan')} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"><FaPlus size={10} /> Pilih Pegawai</button>
+                    </div>
+                    <input type="text" value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.penandatangan, false)}`} />
+                  </div>
               </div>
             </div>
           )}
