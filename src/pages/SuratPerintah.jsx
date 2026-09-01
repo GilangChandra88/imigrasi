@@ -489,23 +489,28 @@ export default function SuratPerintah() {
                 </div>
               </div>
               
-              <div className="flex justify-end mt-10">
-                <div className="w-[300px] flex gap-4">
+              <div className="mt-16 grid grid-cols-2">
+                <div>
+                  {/* QR Code Placeholder */}
                   <div className="w-24 h-24 bg-slate-100 border-2 border-slate-300 mt-12 flex items-center justify-center text-xs text-slate-400 font-sans text-center p-2">QR Code TTE</div>
-                  <div className="flex-1">
-                    <div className="text-sm">
-                      <div className="grid grid-cols-[100px_1fr] gap-1 mb-2">
-                        <span>Dikeluarkan di</span>
-                        <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32" /></span>
-                        
-                        <span>Pada Tanggal</span>
-                        <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs" /></span>
-                      </div>
-                      <div className="font-bold mb-16 uppercase">KEPALA KANTOR,</div>
-                      <div className="font-bold underline">
-                        <input value={docData.penandatangan} onChange={e=>setDocData({...docData, penandatangan: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-full text-center" />
-                      </div>
-                    </div>
+                </div>
+                <div className="text-sm">
+                  <div className="grid grid-cols-[100px_1fr] gap-1 mb-2">
+                    <span>Dikeluarkan di</span>
+                    <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32" /></span>
+                    
+                    <span>Pada Tanggal</span>
+                    <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs" /></span>
+                  </div>
+                  <div className="font-bold mb-16 uppercase">
+                    KEPALA KANTOR,
+                  </div>
+                  <div>
+                    <input 
+                      value={docData.penandatangan} 
+                      onChange={e=>setDocData({...docData, penandatangan: e.target.value})} 
+                      className="font-bold underline outline-none border-transparent hover:bg-slate-50 focus:bg-indigo-50 bg-transparent w-full" 
+                    />
                   </div>
                 </div>
               </div>
