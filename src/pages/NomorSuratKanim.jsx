@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, query, deleteDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
-import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns, FaFileAlt, FaTimes } from "react-icons/fa";
+import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns, FaFileAlt, FaTimes, FaPrint } from "react-icons/fa";
 
 import ViewTree from "../components/ViewTree";
 import ViewExplorer from "../components/ViewExplorer";
@@ -157,7 +157,7 @@ export default function NomorSuratKanim() {
   return (
     <div className="w-full bg-white min-h-screen font-sans flex flex-col">
       {/* Header Section */}
-      <div className="px-6 py-4 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      <div className="px-6 py-4 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-slate-800 mb-1 tracking-tight">Nomor Surat Kanim</h1>
           <p className="text-slate-500 font-medium text-sm">
@@ -167,7 +167,7 @@ export default function NomorSuratKanim() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white px-6 border-b border-slate-200 flex gap-6 shrink-0">
+      <div className="bg-white px-6 border-b border-slate-200 flex gap-6 shrink-0 print:hidden">
         <button 
           onClick={() => setActiveTab('hierarki')}
           className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'hierarki' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
@@ -183,7 +183,7 @@ export default function NomorSuratKanim() {
       </div>
 
       {activeTab === 'hierarki' && (
-        <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0 print:hidden">
           <div className="px-6 py-3 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-slate-50/50 justify-between">
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
               {HIERARCHY.join(' → ')}
@@ -278,7 +278,7 @@ export default function NomorSuratKanim() {
       )}
 
       {activeTab === 'pengaturan' && (
-        <div className="flex-1 p-6 bg-slate-50 overflow-auto">
+        <div className="flex-1 p-6 bg-slate-50 overflow-auto print:hidden">
           <div className="max-w-4xl mx-auto space-y-6">
             
             {/* Pengaturan Nomor */}
@@ -353,6 +353,9 @@ export default function NomorSuratKanim() {
     </div>
   );
 }
+
+
+
 
 
 

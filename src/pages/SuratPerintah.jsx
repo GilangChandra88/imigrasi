@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot, query, where } from "firebase/firestore";
 import { FaSearch, FaPlus, FaTrash, FaSave, FaCheck, FaTimes, FaPrint, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export default function SuratPerintah() {
+  const navigate = useNavigate();
   const [PegawaiList, setPegawaiList] = useState([]);
   const [searchPegawai, setSearchPegawai] = useState("");
   
@@ -768,6 +770,11 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
+
+
+
 
 
 
