@@ -76,8 +76,7 @@ export default function SuratPerintah() {
   }, [docData, viewMode]);
 
   const isFormValid = () => {
-    return (docData.nomor || '').trim() !== '' &&
-           (docData.menimbang || '').trim() !== '' &&
+    return (docData.menimbang || '').trim() !== '' &&
            docData.dasar.length > 0 && docData.dasar.every(d => (d || '').trim() !== '') &&
            docData.kepada.length > 0 &&
            docData.untuk.length > 0 && docData.untuk.every(u => (u || '').trim() !== '') &&
@@ -98,7 +97,7 @@ export default function SuratPerintah() {
     return `print:!bg-transparent print:!border-transparent print:!ring-0 bg-rose-50 border border-dashed border-rose-400 ${isActive ? 'ring-2 ring-rose-300' : ''}`;
   };
 
-  const handleGenerateNomor = () => {
+  const handleGenerateNomor = async () => {
     if (!selectedKop || !selectedKode1 || !selectedKode2 || !selectedKode3) {
       alert("Pilih hierarki nomor surat dengan lengkap!");
       return;
@@ -113,9 +112,29 @@ export default function SuratPerintah() {
       selectedKode3.kode || selectedKode3.name
     ].filter(p => p && p.trim() !== "");
     
-    const generated = `${parts.join(".")}-${nextNumber}`;
-    setDocData({ ...docData, nomor: generated });
+    const generated = `${parts.join(".")}-${nextNumber.toString().padStart(4, '0')}`;
+    const newData = { ...docData, nomor: generated };
+    
+    setDocData(newData);
     setIsNomorModalOpen(false);
+
+    try {
+      await addDoc(collection(db, "surat_perintah"), {
+        ...newData,
+        createdAt: new Date().toISOString()
+      });
+      await updateDoc(doc(db, "settings", "nomor_surat"), {
+        lastNumber: nextNumber
+      });
+      
+      // Wait a bit for React to render the new Nomor in the document before printing
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    } catch (error) {
+      console.error("Error saving document:", error);
+      alert("Gagal menyimpan dokumen surat. Hubungi administrator.");
+    }
   };
 
   const filteredPegawai = PegawaiList.filter(k => 
@@ -298,13 +317,10 @@ export default function SuratPerintah() {
 
         <div className="flex gap-3">
           <button 
-            onClick={() => window.print()} 
+            onClick={() => setIsNomorModalOpen(true)} 
             disabled={!isFormValid()}
-            className={`bg-white border px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm ${isFormValid() ? 'text-indigo-600 border-indigo-200 hover:bg-indigo-50' : 'text-slate-400 border-slate-200 opacity-50 cursor-not-allowed'}`}>
-            <FaPrint size={16} /> Cetak
-          </button>
-          <button onClick={handleSaveDocument} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm">
-            <FaSave size={16} /> Simpan Surat
+            className={`border px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm ${isFormValid() ? 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700' : 'bg-slate-100 text-slate-400 border-slate-200 opacity-50 cursor-not-allowed'}`}>
+            <FaPrint size={16} /> Buat Surat
           </button>
         </div>
       </div>
@@ -321,20 +337,13 @@ export default function SuratPerintah() {
               <h2 className="text-xl font-bold text-slate-800 border-b border-slate-100 pb-4">Isi Data Surat Perintah</h2>
               
               <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-slate-600">Nomor Surat</label>
-                  <div className="flex gap-2">
-                    <input type="text" value={docData.nomor} readOnly placeholder="Klik tombol SET NOMOR" className={`flex-1 p-2.5 border rounded-lg outline-none cursor-not-allowed font-mono text-sm ${getValidationClass(docData.nomor, false)}`} />
-                    <button onClick={() => setIsNomorModalOpen(true)} className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg text-sm transition-colors whitespace-nowrap shadow-sm">SET NOMOR</button>
-                  </div>
-                </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-600">Menimbang</label>
                   <textarea 
                     value={docData.menimbang} 
                     onChange={e => setDocData({...docData, menimbang: e.target.value})} 
-                    onFocus={() => setActiveField('menimbang')}
+                    onFocus={() => { setActiveField('menimbang'); setIsSugestiOpen(true); }}
                     onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
                     className={`w-full p-3 border rounded-lg outline-none focus:ring-2 leading-relaxed resize-none overflow-hidden transition-colors ${getValidationClass(docData.menimbang, activeField === 'menimbang')}`}
                     rows={1}
@@ -354,7 +363,7 @@ export default function SuratPerintah() {
                             newDasar[index] = e.target.value;
                             setDocData({...docData, dasar: newDasar});
                           }}
-                          onFocus={() => setActiveField('dasar')}
+                          onFocus={() => { setActiveField('dasar'); setIsSugestiOpen(true); }}
                           onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
                           className={`flex-1 p-3 border rounded-lg outline-none focus:ring-2 leading-relaxed resize-none overflow-hidden transition-colors ${getValidationClass(item, activeField === 'dasar')}`}
                           rows={1}
@@ -411,7 +420,7 @@ export default function SuratPerintah() {
                             newUntuk[index] = e.target.value;
                             setDocData({...docData, untuk: newUntuk});
                           }}
-                          onFocus={() => setActiveField('untuk')}
+                          onFocus={() => { setActiveField('untuk'); setIsSugestiOpen(true); }}
                           onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
                           className={`flex-1 p-3 border rounded-lg outline-none focus:ring-2 leading-relaxed resize-none overflow-hidden transition-colors ${getValidationClass(item, activeField === 'untuk')}`}
                           rows={1}
@@ -452,7 +461,7 @@ export default function SuratPerintah() {
                       <label className="text-sm font-bold text-slate-600">Penandatangan</label>
                       <button onClick={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"><FaPlus size={10} /> Pilih Pegawai</button>
                     </div>
-                    <input type="text" onFocus={() => setActiveField('penandatangan')} value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.penandatangan, false)}`} />
+                    <input type="text" onFocus={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }} value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.penandatangan, false)}`} />
                   </div>
               </div>
             </div>
@@ -485,15 +494,12 @@ export default function SuratPerintah() {
                   <div className={`font-bold text-base bg-transparent text-center px-4 py-0.5 min-w-[250px] rounded ${getDocValidationClass(docData.nomor, false)}`}>
                     {docData.nomor}
                   </div>
-                  <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200 print:hidden shadow-sm">
-                    SET NOMOR
-                  </button>
                 </div>
               </div>
             </div>
 
             {/* Isi Surat */}
-            <div className="flex-1 flex flex-col gap-6 text-justify">
+            <div className="flex-1 flex flex-col gap-3 text-justify">
               
               <div className="grid grid-cols-[100px_1fr] gap-4">
                 <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('menimbang')}>Menimbang</div>
@@ -762,6 +768,9 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
+
 
 
 

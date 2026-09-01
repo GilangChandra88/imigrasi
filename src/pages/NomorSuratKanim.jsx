@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, query, deleteDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
-import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns, FaFileAlt } from "react-icons/fa";
+import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns, FaFileAlt, FaTimes } from "react-icons/fa";
 
 import ViewTree from "../components/ViewTree";
 import ViewExplorer from "../components/ViewExplorer";
@@ -15,7 +15,8 @@ const HIERARCHY = [
 ];
 
 export default function NomorSuratKanim() {
-  const [activeTab, setActiveTab] = useState('hierarki'); // 'hierarki', 'pengaturan'
+  const [activeTab, setActiveTab] = useState('hierarki');
+  const [previewSurat, setPreviewSurat] = useState(null);
   const [nodes, setNodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('tree'); // 'tree', 'explorer', 'columns'
@@ -330,7 +331,7 @@ export default function NomorSuratKanim() {
                   </thead>
                   <tbody>
                     {suratHistory.length === 0 ? (
-                      <tr><td colSpan="4" className="p-8 text-center text-slate-400 font-medium">Belum ada riwayat surat keluar</td></tr>
+                      <tr><td colSpan="5" className="p-8 text-center text-slate-400 font-medium">Belum ada riwayat surat keluar</td></tr>
                     ) : (
                       suratHistory.map((s) => (
                         <tr key={s.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
@@ -352,3 +353,10 @@ export default function NomorSuratKanim() {
     </div>
   );
 }
+
+
+
+
+
+
+
