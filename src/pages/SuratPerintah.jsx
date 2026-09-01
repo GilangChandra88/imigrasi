@@ -522,7 +522,7 @@ export default function SuratPerintah() {
                             setDocData({...docData, dasar: newDasar});
                           }}
                           onClick={() => setActiveField('dasar')}
-                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`} rows={1}
+                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${getDocValidationClass(item, activeField === 'dasar')}`} rows={1}
                         />
                         <button 
                           onClick={() => {
@@ -595,7 +595,7 @@ export default function SuratPerintah() {
                             setDocData({...docData, untuk: newUntuk});
                           }}
                           onClick={() => setActiveField('untuk')}
-                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`} rows={1}
+                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${getDocValidationClass(item, activeField === 'untuk')}`} rows={1}
                         />
                         <button 
                           onClick={() => {
@@ -762,6 +762,8 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
 
 
 
