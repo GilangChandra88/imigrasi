@@ -1,8 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import MakSetup from './pages/MakSetup'
 import NomorSuratKanim from './pages/NomorSuratKanim'
-import Karyawan from './pages/Karyawan'
-import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers } from 'react-icons/fa'
+import Pegawai from './pages/Pegawai'
+import SuratPerintah from './pages/SuratPerintah'
+import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaFileSignature } from 'react-icons/fa'
 import { useState } from 'react'
 
 function Sidebar() {
@@ -44,12 +45,20 @@ function Sidebar() {
           {!isCollapsed && <span className="truncate">Nomor Surat</span>}
         </Link>
         <Link 
-          to="/karyawan" 
-          title="Karyawan"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/karyawan' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          to="/Pegawai" 
+          title="Pegawai"
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/Pegawai' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
         >
           <FaUsers size={18} className="shrink-0" /> 
-          {!isCollapsed && <span className="truncate">Karyawan</span>}
+          {!isCollapsed && <span className="truncate">Pegawai</span>}
+        </Link>
+        <Link 
+          to="/surat-perintah" 
+          title="Surat Perintah"
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/surat-perintah' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+        >
+          <FaFileSignature size={18} className="shrink-0" /> 
+          {!isCollapsed && <span className="truncate">Surat Perintah</span>}
         </Link>
       </div>
     </nav>
@@ -66,7 +75,8 @@ function App() {
           <Routes>
             <Route path="/mak-setup" element={<MakSetup />} />
             <Route path="/nomor-surat-kanim" element={<NomorSuratKanim />} />
-            <Route path="/karyawan" element={<Karyawan />} />
+            <Route path="/Pegawai" element={<Pegawai />} />
+            <Route path="/surat-perintah" element={<SuratPerintah />} />
             <Route path="/" element={
               <div className="p-8 max-w-4xl mx-auto text-center mt-20 bg-white rounded-2xl shadow-sm border border-slate-200">
                 <h1 className="text-3xl font-bold text-slate-800">Selamat Datang di Imigrasi Super Web</h1>
@@ -78,8 +88,11 @@ function App() {
                   <Link to="/nomor-surat-kanim" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
                     Buka Nomor Surat
                   </Link>
-                  <Link to="/karyawan" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
-                    Data Karyawan
+                  <Link to="/Pegawai" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
+                    Data Pegawai
+                  </Link>
+                  <Link to="/surat-perintah" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
+                    Surat Perintah
                   </Link>
                 </div>
               </div>
