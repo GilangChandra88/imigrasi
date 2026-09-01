@@ -301,7 +301,7 @@ export default function ViewTree({ nodes, hierarchy, onAdd, onDelete, onEdit, fo
                 autoFocus
                 value={rootName}
                 onChange={(e) => setRootName(e.target.value)}
-                placeholder="Tahun Anggaran (Cth: 2026)"
+                placeholder={`Tambah ${hierarchy[0]}...`}
                 className="w-56 text-sm py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
               />
               <div className="flex gap-2 shrink-0 ml-auto pl-2">
@@ -325,7 +325,7 @@ export default function ViewTree({ nodes, hierarchy, onAdd, onDelete, onEdit, fo
               onClick={() => setIsAddingRoot(true)}
               className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
             >
-              <FaPlus size={14} /> Tambah Tahun
+              <FaPlus size={14} /> Tambah {hierarchy[0]}
             </button>
           )}
         </div>
