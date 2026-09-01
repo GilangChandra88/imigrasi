@@ -76,20 +76,26 @@ export default function SuratPerintah() {
   }, [docData, viewMode]);
 
   const isFormValid = () => {
-    return docData.nomor.trim() !== '' &&
-           docData.menimbang.trim() !== '' &&
-           docData.dasar.length > 0 && docData.dasar.every(d => d.trim() !== '') &&
+    return (docData.nomor || '').trim() !== '' &&
+           (docData.menimbang || '').trim() !== '' &&
+           docData.dasar.length > 0 && docData.dasar.every(d => (d || '').trim() !== '') &&
            docData.kepada.length > 0 &&
-           docData.untuk.length > 0 && docData.untuk.every(u => u.trim() !== '') &&
-           docData.tempat.trim() !== '' &&
-           docData.tanggal.trim() !== '' &&
-           docData.penandatangan.trim() !== '';
+           docData.untuk.length > 0 && docData.untuk.every(u => (u || '').trim() !== '') &&
+           (docData.tempat || '').trim() !== '' &&
+           (docData.tanggal || '').trim() !== '' &&
+           (docData.penandatangan || '').trim() !== '';
   };
 
   const getValidationClass = (val, isActive) => {
-    const isFilled = typeof val === 'string' ? val.trim() !== '' : (Array.isArray(val) ? val.length > 0 && val.every(v => v.trim() !== '') : !!val);
+    const isFilled = typeof val === 'string' ? (val || '').trim() !== '' : (Array.isArray(val) ? val.length > 0 && val.every(v => typeof v === 'string' ? (v || '').trim() !== '' : !!v) : !!val);
     if (isFilled) return `border-emerald-400 bg-emerald-50/40 focus:ring-emerald-500 ${isActive ? 'ring-2 ring-emerald-200' : ''}`;
     return `border-rose-400 bg-rose-50/60 focus:ring-rose-500 ${isActive ? 'ring-2 ring-rose-200' : ''}`;
+  };
+
+  const getDocValidationClass = (val, isActive) => {
+    const isFilled = typeof val === 'string' ? (val || '').trim() !== '' : (Array.isArray(val) ? val.length > 0 && val.every(v => typeof v === 'string' ? (v || '').trim() !== '' : !!v) : !!val);
+    if (isFilled) return `print:!bg-transparent print:!border-transparent print:!ring-0 border-emerald-400 bg-emerald-50/20 focus:ring-emerald-500 ${isActive ? 'ring-2 ring-emerald-200 bg-emerald-50/40' : ''}`;
+    return `print:!bg-transparent print:!border-transparent print:!ring-0 border-rose-400 bg-rose-50/40 focus:ring-rose-500 ${isActive ? 'ring-2 ring-rose-300' : ''}`;
   };
 
   const handleGenerateNomor = () => {
@@ -480,7 +486,7 @@ export default function SuratPerintah() {
                     type="text" 
                     value={docData.nomor} 
                     onChange={e => setDocData({...docData, nomor: e.target.value})}
-                    className="font-bold text-base outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent text-center w-64"
+                    className={`font-bold text-base outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent text-center w-64 rounded ${getDocValidationClass(docData.nomor, false)}`}
                   />
                   <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200 print:hidden">
                     SET NOMOR
@@ -500,7 +506,7 @@ export default function SuratPerintah() {
                     value={docData.menimbang}
                     onChange={e => setDocData({...docData, menimbang: e.target.value})}
                     onClick={() => setActiveField('menimbang')}
-                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[80px] leading-relaxed ${activeField === 'menimbang' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
+                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[80px] leading-relaxed ${getDocValidationClass(docData.menimbang, activeField === 'menimbang')}`}
                   />
                 </div>
 
@@ -551,8 +557,8 @@ export default function SuratPerintah() {
               <div className="text-center font-bold tracking-widest my-4">M E N U G A S K A N :</div>
 
               <div className="grid grid-cols-[100px_1fr] gap-4">
-                <div className="font-semibold pt-1">Kepada</div>
-                <div className="flex">
+                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('kepada')}>Kepada</div>
+                <div className={`flex rounded p-1 print:p-0 ${getDocValidationClass(docData.kepada, activeField === 'kepada')}`}>
                   <span className="mr-2 pt-1">:</span>
                   <div className="flex-1 flex flex-col gap-4 pt-1">
                     {docData.kepada.map((p, idx) => (
@@ -629,10 +635,10 @@ export default function SuratPerintah() {
                 <div className="text-sm">
                   <div className="grid grid-cols-[100px_1fr] gap-1 mb-2">
                     <span>Dikeluarkan di</span>
-                    <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32" /></span>
+                    <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className={`outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 rounded ${getDocValidationClass(docData.tempat, false)}`} /></span>
                     
                     <span>Pada Tanggal</span>
-                    <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className="outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs" /></span>
+                    <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className={`outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs rounded ${getDocValidationClass(docData.tanggal, false)}`} /></span>
                   </div>
                   <div className="font-bold mb-16 uppercase">
                     KEPALA KANTOR,
@@ -641,7 +647,8 @@ export default function SuratPerintah() {
                     <input 
                       value={docData.penandatangan} 
                       onChange={e=>setDocData({...docData, penandatangan: e.target.value})} 
-                      className="font-bold underline outline-none border-transparent hover:bg-slate-50 focus:bg-indigo-50 bg-transparent w-full" 
+                      onClick={() => setActiveField('penandatangan')}
+                      className={`font-bold underline outline-none border-transparent hover:bg-slate-50 focus:bg-indigo-50 bg-transparent w-full rounded ${getDocValidationClass(docData.penandatangan, activeField === 'penandatangan')}`} 
                     />
                   </div>
                 </div>
@@ -758,6 +765,15 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
 
 
 
