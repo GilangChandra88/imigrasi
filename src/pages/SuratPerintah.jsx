@@ -17,13 +17,10 @@ export default function SuratPerintah() {
   // Document State
   const [docData, setDocData] = useState({
     nomor: "",
-    menimbang: "Bahwa dalam rangka pelaksanaan tugas kedinasan, dipandang perlu untuk dikeluarkan Surat Perintah sebagai landasan dalam pelaksanaan kegiatan dimaksud.",
-    dasar: ["DIPA Kantor Imigrasi Kelas II TPI Singaraja;"],
+    menimbang: "",
+    dasar: [""],
     kepada: [],
-    untuk: [
-      "Melaksanakan tugas kedinasan dengan sebaik-baiknya;",
-      "Melaporkan hasil kegiatan tersebut kepada Kepala Kantor Imigrasi Kelas II TPI Singaraja."
-    ],
+    untuk: [""],
     tempat: "Singaraja",
     tanggal: new Date().toISOString().split('T')[0], // yyyy-mm-dd
     penandatangan: ""
@@ -761,6 +758,7 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
 
 
 
