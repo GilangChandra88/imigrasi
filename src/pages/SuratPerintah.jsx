@@ -23,7 +23,7 @@ export default function SuratPerintah() {
   });
 
   const [isNomorModalOpen, setIsNomorModalOpen] = useState(false);
-  const [activeField, setActiveField] = useState("menimbang"); // 'menimbang', 'dasar', 'untuk'
+  const [activeField, setActiveField] = useState("menimbang");  const [viewMode, setViewMode] = useState("document");
 
   // Nomor Surat State
   const [nomorNodes, setNomorNodes] = useState([]);
@@ -233,12 +233,28 @@ export default function SuratPerintah() {
         </div>
       )}
 
-      {/* Header */}
+            {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0 shadow-sm z-10 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Buat Surat Perintah</h1>
           <p className="text-slate-500 font-medium text-sm">Desain dan simpan surat perintah secara interaktif</p>
         </div>
+        
+        <div className="flex bg-slate-100 p-1 rounded-xl shrink-0 mx-4">
+          <button 
+            onClick={() => setViewMode('document')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${viewMode === 'document' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Mode Dokumen
+          </button>
+          <button 
+            onClick={() => setViewMode('form')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${viewMode === 'form' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Mode Form
+          </button>
+        </div>
+
         <div className="flex gap-3">
           <button onClick={() => window.print()} className="bg-white text-indigo-600 border border-indigo-200 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-sm">
             <FaPrint size={16} /> Cetak
@@ -295,10 +311,78 @@ export default function SuratPerintah() {
           </div>
         </div>
 
-        {/* MIDDLE PANEL: Document Preview */}
+                {/* MIDDLE PANEL: Main View Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/50 print:p-0 print:bg-transparent print:overflow-visible print:block">
+          
+          {/* FORM VIEW */}
+          {viewMode === 'form' && (
+            <div className="bg-white shadow-sm rounded-xl border border-slate-200 w-full max-w-3xl p-8 flex flex-col gap-6 print:hidden">
+              <h2 className="text-xl font-bold text-slate-800 border-b border-slate-100 pb-4">Isi Data Surat Perintah</h2>
+              
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-600">Nomor Surat</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={docData.nomor} onChange={e => setDocData({...docData, nomor: e.target.value})} className="flex-1 p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm" />
+                    <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-200 transition-colors">Set Nomor</button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-600">Menimbang</label>
+                  <textarea value={docData.menimbang} onChange={e => setDocData({...docData, menimbang: e.target.value})} className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] leading-relaxed" />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-600">Dasar</label>
+                  <textarea value={docData.dasar} onChange={e => setDocData({...docData, dasar: e.target.value})} className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] leading-relaxed" />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-600 flex justify-between items-center">
+                    <span>Kepada (Pegawai yang ditugaskan)</span>
+                    <span className="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Pilih dari panel kiri</span>
+                  </label>
+                  <div className="flex flex-col gap-2">
+                    {docData.kepada.length === 0 && <div className="text-sm text-slate-400 italic p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">Belum ada pegawai yang dipilih. Klik tombol + di panel kiri.</div>}
+                    {docData.kepada.map(k => (
+                      <div key={k.id} className="flex justify-between items-center bg-white border border-slate-200 shadow-sm p-3 rounded-lg">
+                        <div>
+                          <p className="font-bold text-slate-700 text-sm">{k.nama}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{k.nip} - {k.jabatan}</p>
+                        </div>
+                        <button onClick={() => handleRemoveKepada(k.id)} className="text-rose-500 hover:text-rose-700 p-2 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={14} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-600">Untuk</label>
+                  <textarea value={docData.untuk} onChange={e => setDocData({...docData, untuk: e.target.value})} className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[150px] leading-relaxed" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-slate-600">Tempat Dikeluarkan</label>
+                    <input type="text" value={docData.tempat} onChange={e => setDocData({...docData, tempat: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-slate-600">Tanggal</label>
+                    <input type="date" value={docData.tanggal} onChange={e => setDocData({...docData, tanggal: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-600">Penandatangan</label>
+                  <input type="text" value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div 
-            className="bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex flex-col text-slate-900 relative print:shadow-none print:max-w-none print:w-full print:min-h-0 print:p-0"
+            className={`bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex-col text-slate-900 relative print:shadow-none print:max-w-none print:w-full print:min-h-0 print:p-0 ${viewMode === 'document' ? 'flex' : 'hidden print:flex'}`}
             style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '16px' }}
           >
             
@@ -493,3 +577,5 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
