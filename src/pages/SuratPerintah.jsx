@@ -22,7 +22,16 @@ export default function SuratPerintah() {
     penandatangan: "Anak Agung Gde Kusuma Putra"
   });
 
+  const [isNomorModalOpen, setIsNomorModalOpen] = useState(false);
   const [activeField, setActiveField] = useState("menimbang"); // 'menimbang', 'dasar', 'untuk'
+
+  // Nomor Surat State
+  const [nomorNodes, setNomorNodes] = useState([]);
+  const [lastNumberSetting, setLastNumberSetting] = useState(0);
+  const [selectedKop, setSelectedKop] = useState(null);
+  const [selectedKode1, setSelectedKode1] = useState(null);
+  const [selectedKode2, setSelectedKode2] = useState(null);
+  const [selectedKode3, setSelectedKode3] = useState(null);
 
   // Fetch Pegawai
   useEffect(() => {
@@ -39,6 +48,31 @@ export default function SuratPerintah() {
     });
     return () => unsub();
   }, []);
+
+  // Fetch Nomor Surat Hierarchy and Settings
+  useEffect(() => {
+    const unsubNomor = onSnapshot(collection(db, "nomor surat kanim"), (snapshot) => {
+      setNomorNodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    const unsubSettings = onSnapshot(doc(db, "settings", "nomor_surat"), (docSnap) => {
+      if (docSnap.exists()) {
+        setLastNumberSetting(docSnap.data().lastNumber || 0);
+      }
+    });
+    return () => { unsubNomor(); unsubSettings(); };
+  }, []);
+
+  const handleGenerateNomor = () => {
+    if (!selectedKop || !selectedKode1 || !selectedKode2 || !selectedKode3) {
+      alert("Pilih hierarki nomor surat dengan lengkap!");
+      return;
+    }
+    const nextNumber = parseInt(lastNumberSetting) + 1;
+    // Format: [KOP].[Kode 1].[Kode 2].[Kode 3]-[NextNumber]
+    const generated = `${selectedKop.kode}.${selectedKode1.kode}.${selectedKode2.kode}.${selectedKode3.kode}-${nextNumber}`;
+    setDocData({ ...docData, nomor: generated });
+    setIsNomorModalOpen(false);
+  };
 
   const filteredPegawai = PegawaiList.filter(k => 
     k.nama?.toLowerCase().includes(searchPegawai.toLowerCase()) || 
@@ -101,7 +135,96 @@ export default function SuratPerintah() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-slate-100 overflow-hidden relative">
+      
+      {/* MODAL NOMOR SURAT */}
+      {isNomorModalOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-full">
+            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h2 className="font-bold text-lg text-slate-800">Generate Nomor Surat</h2>
+              <button onClick={() => setIsNomorModalOpen(false)} className="text-slate-400 hover:text-rose-500"><FaTimes /></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex flex-col gap-6">
+              
+              {/* KOP Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-2">PILIH KOP</label>
+                <select 
+                  value={selectedKop?.id || ''} 
+                  onChange={e => {
+                    setSelectedKop(nomorNodes.find(n => n.id === e.target.value));
+                    setSelectedKode1(null); setSelectedKode2(null); setSelectedKode3(null);
+                  }}
+                  className="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">-- Pilih KOP --</option>
+                  {nomorNodes.filter(n => n.type === 'KOP').map(n => <option key={n.id} value={n.id}>{n.kode} - {n.name}</option>)}
+                </select>
+              </div>
+
+              {/* Kode 1 Selection */}
+              {selectedKop && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2">PILIH KODE SURAT 1</label>
+                  <select 
+                    value={selectedKode1?.id || ''} 
+                    onChange={e => {
+                      setSelectedKode1(nomorNodes.find(n => n.id === e.target.value));
+                      setSelectedKode2(null); setSelectedKode3(null);
+                    }}
+                    className="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">-- Pilih Kode Surat 1 --</option>
+                    {nomorNodes.filter(n => n.parentId === selectedKop.id).map(n => <option key={n.id} value={n.id}>{n.kode} - {n.name}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Kode 2 Selection */}
+              {selectedKode1 && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2">PILIH KODE SURAT 2</label>
+                  <select 
+                    value={selectedKode2?.id || ''} 
+                    onChange={e => {
+                      setSelectedKode2(nomorNodes.find(n => n.id === e.target.value));
+                      setSelectedKode3(null);
+                    }}
+                    className="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">-- Pilih Kode Surat 2 --</option>
+                    {nomorNodes.filter(n => n.parentId === selectedKode1.id).map(n => <option key={n.id} value={n.id}>{n.kode} - {n.name}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Kode 3 Selection */}
+              {selectedKode2 && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2">PILIH KODE SURAT 3</label>
+                  <select 
+                    value={selectedKode3?.id || ''} 
+                    onChange={e => setSelectedKode3(nomorNodes.find(n => n.id === e.target.value))}
+                    className="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">-- Pilih Kode Surat 3 --</option>
+                    {nomorNodes.filter(n => n.parentId === selectedKode2.id).map(n => <option key={n.id} value={n.id}>{n.kode} - {n.name}</option>)}
+                  </select>
+                </div>
+              )}
+              
+            </div>
+            
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+              <button onClick={() => setIsNomorModalOpen(false)} className="px-4 py-2 rounded-lg font-semibold text-slate-500 hover:bg-slate-100">Batal</button>
+              <button onClick={handleGenerateNomor} className="px-4 py-2 rounded-lg font-semibold bg-indigo-600 text-white hover:bg-indigo-700">Generate Nomor</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0 shadow-sm z-10">
         <div>
@@ -161,16 +284,20 @@ export default function SuratPerintah() {
 
         {/* MIDDLE PANEL: Document Preview */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/50">
-          <div className="bg-white shadow-xl w-full max-w-[800px] min-h-[1100px] p-10 sm:p-14 rounded-sm flex flex-col text-slate-900 font-serif relative">
+          <div 
+            className="bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex flex-col text-slate-900 relative"
+            style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '16px' }}
+          >
             
-            {/* Header / KOP Placeholder (Visual only) */}
-            <div className="border-b-4 border-slate-900 pb-4 mb-6 flex items-center justify-center text-center relative">
+            {/* Header / KOP Placeholder */}
+            <div className="border-b-[3px] border-slate-900 pb-4 mb-6 flex items-center justify-center text-center relative" style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: '13.33px' }}>
               <div className="absolute left-0 top-0 w-20 h-20 bg-slate-100 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 text-xs font-sans">Logo</div>
               <div>
-                <h3 className="font-bold text-lg leading-tight uppercase">Kementerian Imigrasi dan Pemasyarakatan</h3>
-                <h3 className="font-bold text-lg leading-tight uppercase">Direktorat Jenderal Imigrasi</h3>
-                <h2 className="font-bold text-xl leading-tight uppercase mt-1">Kantor Imigrasi Kelas II TPI Singaraja</h2>
-                <p className="text-xs mt-1">Jl. Raya Singaraja Seririt, Pemaron, Buleleng, Bali. Telepon (0362) 32174</p>
+                <h3 className="font-bold leading-tight uppercase">Kementerian Imigrasi dan Pemasyarakatan</h3>
+                <h3 className="font-bold leading-tight uppercase">Direktorat Jenderal Imigrasi</h3>
+                <h2 className="font-bold leading-tight uppercase mt-0.5" style={{ fontSize: '16px' }}>Kantor Imigrasi Kelas II TPI Singaraja</h2>
+                <p className="mt-0.5">Jl. Raya Singaraja Seririt, Pemaron, Buleleng, Bali. Telepon (0362) 32174</p>
+                <p>Laman: www.singaraja.imigrasi.go.id Pos-el: kanim_singaraja@imigrasi.go.id</p>
               </div>
             </div>
 
@@ -179,12 +306,17 @@ export default function SuratPerintah() {
               <h2 className="font-bold text-lg underline uppercase tracking-wider">Surat Perintah</h2>
               <div className="flex justify-center items-center mt-1">
                 <span className="mr-2">NOMOR :</span>
-                <input 
-                  type="text" 
-                  value={docData.nomor} 
-                  onChange={e => setDocData({...docData, nomor: e.target.value})}
-                  className="font-bold text-base outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent text-center w-64"
-                />
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    value={docData.nomor} 
+                    onChange={e => setDocData({...docData, nomor: e.target.value})}
+                    className="font-bold text-base outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent text-center w-64"
+                  />
+                  <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200">
+                    SET NOMOR
+                  </button>
+                </div>
               </div>
             </div>
 
