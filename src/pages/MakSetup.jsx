@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, getDocs, query, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, deleteDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns } from "react-icons/fa";
 
 import ViewTree from "../components/ViewTree";
@@ -27,39 +27,33 @@ export default function MakSetup() {
 
   const makCollection = collection(db, "MAK");
 
-  const fetchData = async () => {
-    try {
-      const q = query(makCollection);
-      const querySnapshot = await getDocs(q);
+  useEffect(() => {
+    const q = query(makCollection);
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
       setNodes(data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
       setLoading(false);
-    }
-  };
+    }, (error) => {
+      console.error("Error fetching data realtime:", error);
+      setLoading(false);
+    });
 
-  useEffect(() => {
-    fetchData();
+    return () => unsubscribe();
   }, []);
 
   const handleAddNode = async (kode, name, type, parentId) => {
     try {
-      const docRef = await addDoc(makCollection, {
+      await addDoc(makCollection, {
         kode: kode || "",
         name,
         type,
         parentId,
         createdAt: new Date().toISOString(),
       });
-      setNodes((prev) => [
-        ...prev,
-        { id: docRef.id, kode: kode || "", name, type, parentId },
-      ]);
+      // Realtime listener will handle state update
     } catch (error) {
       console.error("Error adding node:", error);
     }
@@ -84,7 +78,7 @@ export default function MakSetup() {
       for (const nodeId of idsToDelete) {
         await deleteDoc(doc(db, "MAK", nodeId));
       }
-      setNodes(nodes.filter(n => !idsToDelete.includes(n.id)));
+      // Realtime listener will handle state update
     } catch (error) {
       console.error("Error deleting nodes:", error);
     }
@@ -93,9 +87,7 @@ export default function MakSetup() {
   const handleEditNode = async (id, kode, name) => {
     try {
       await updateDoc(doc(db, "MAK", id), { kode, name });
-      setNodes((prev) => 
-        prev.map(n => n.id === id ? { ...n, kode, name } : n)
-      );
+      // Realtime listener will handle state update
     } catch (error) {
       console.error("Error editing node:", error);
     }
