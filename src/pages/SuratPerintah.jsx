@@ -68,8 +68,16 @@ export default function SuratPerintah() {
       return;
     }
     const nextNumber = parseInt(lastNumberSetting) + 1;
-    // Format: [KOP].[Kode 1].[Kode 2].[Kode 3]-[NextNumber]
-    const generated = `${selectedKop.kode}.${selectedKode1.kode}.${selectedKode2.kode}.${selectedKode3.kode}-${nextNumber}`;
+    
+    // Gabungkan kode, jika kode kosong maka gunakan nama. Filter bagian yang kosong agar tidak ada titik berlebih.
+    const parts = [
+      selectedKop.kode || selectedKop.name,
+      selectedKode1.kode || selectedKode1.name,
+      selectedKode2.kode || selectedKode2.name,
+      selectedKode3.kode || selectedKode3.name
+    ].filter(p => p && p.trim() !== "");
+    
+    const generated = `${parts.join(".")}-${nextNumber}`;
     setDocData({ ...docData, nomor: generated });
     setIsNomorModalOpen(false);
   };
