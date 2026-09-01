@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, query, deleteDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
-import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns } from "react-icons/fa";
+import { FaPlus, FaFolderOpen, FaSitemap, FaFolder, FaColumns, FaFileAlt } from "react-icons/fa";
 
 import ViewTree from "../components/ViewTree";
 import ViewExplorer from "../components/ViewExplorer";
