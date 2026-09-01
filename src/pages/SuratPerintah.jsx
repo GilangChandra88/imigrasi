@@ -94,8 +94,8 @@ export default function SuratPerintah() {
 
   const getDocValidationClass = (val, isActive) => {
     const isFilled = typeof val === 'string' ? (val || '').trim() !== '' : (Array.isArray(val) ? val.length > 0 && val.every(v => typeof v === 'string' ? (v || '').trim() !== '' : !!v) : !!val);
-    if (isFilled) return `print:!bg-transparent print:!border-transparent print:!ring-0 border-emerald-400 bg-emerald-50/20 focus:ring-emerald-500 ${isActive ? 'ring-2 ring-emerald-200 bg-emerald-50/40' : ''}`;
-    return `print:!bg-transparent print:!border-transparent print:!ring-0 border-rose-400 bg-rose-50/40 focus:ring-rose-500 ${isActive ? 'ring-2 ring-rose-300' : ''}`;
+    if (isFilled) return `print:!bg-transparent print:!border-transparent print:!ring-0 bg-emerald-50/40 border border-emerald-200 ${isActive ? 'ring-2 ring-emerald-200' : ''}`;
+    return `print:!bg-transparent print:!border-transparent print:!ring-0 bg-rose-50 border border-dashed border-rose-400 ${isActive ? 'ring-2 ring-rose-300' : ''}`;
   };
 
   const handleGenerateNomor = () => {
