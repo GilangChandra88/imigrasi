@@ -16,7 +16,7 @@ export default function Karyawan() {
   // Form States - Karyawan
   const [isAddingKaryawan, setIsAddingKaryawan] = useState(false);
   const [editingKaryawanId, setEditingKaryawanId] = useState(null);
-  const [formKaryawan, setFormKaryawan] = useState({ nama: '', nik: '', pangkat: '', jabatan: '' });
+  const [formKaryawan, setFormKaryawan] = useState({ nama: '', nip: '', pangkat: '', jabatan: '' });
 
   // Form States - Master
   const [isAddingMaster, setIsAddingMaster] = useState(false);
@@ -49,7 +49,7 @@ export default function Karyawan() {
   // --- KARYAWAN HANDLERS ---
   const handleSaveKaryawan = async (e) => {
     e.preventDefault();
-    if (!formKaryawan.nama || !formKaryawan.nik) return;
+    if (!formKaryawan.nama || !formKaryawan.nip) return;
     try {
       if (editingKaryawanId) {
         await updateDoc(doc(db, "karyawan", editingKaryawanId), formKaryawan);
@@ -58,7 +58,7 @@ export default function Karyawan() {
       }
       setIsAddingKaryawan(false);
       setEditingKaryawanId(null);
-      setFormKaryawan({ nama: '', nik: '', pangkat: '', jabatan: '' });
+      setFormKaryawan({ nama: '', nip: '', pangkat: '', jabatan: '' });
     } catch (error) {
       console.error("Error saving karyawan:", error);
     }
@@ -74,7 +74,7 @@ export default function Karyawan() {
   };
 
   const startEditKaryawan = (k) => {
-    setFormKaryawan({ nama: k.nama, nik: k.nik, pangkat: k.pangkat || '', jabatan: k.jabatan || '' });
+    setFormKaryawan({ nama: k.nama, nip: k.nip, pangkat: k.pangkat || '', jabatan: k.jabatan || '' });
     setEditingKaryawanId(k.id);
     setIsAddingKaryawan(true);
   };
@@ -152,7 +152,7 @@ export default function Karyawan() {
             <p className="text-slate-500 font-medium animate-pulse">Memuat data...</p>
           </div>
         ) : (
-          <div className="max-w-5xl mx-auto">
+          <div>
             
             {/* KARYAWAN TAB */}
             {activeTab === 'karyawan' && (
@@ -161,7 +161,7 @@ export default function Karyawan() {
                   <h2 className="font-bold text-slate-700">Data Karyawan</h2>
                   {!isAddingKaryawan && (
                     <button 
-                      onClick={() => { setIsAddingKaryawan(true); setEditingKaryawanId(null); setFormKaryawan({ nama: '', nik: '', pangkat: '', jabatan: '' }); }}
+                      onClick={() => { setIsAddingKaryawan(true); setEditingKaryawanId(null); setFormKaryawan({ nama: '', nip: '', pangkat: '', jabatan: '' }); }}
                       className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center gap-2"
                     >
                       <FaUserPlus /> Tambah Karyawan
@@ -176,8 +176,8 @@ export default function Karyawan() {
                       <input required type="text" value={formKaryawan.nama} onChange={e => setFormKaryawan({...formKaryawan, nama: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" placeholder="Nama Karyawan" />
                     </div>
                     <div className="flex-1 min-w-[150px]">
-                      <label className="block text-xs font-bold text-slate-500 mb-1">NIK</label>
-                      <input required type="text" value={formKaryawan.nik} onChange={e => setFormKaryawan({...formKaryawan, nik: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" placeholder="Nomor Induk Karyawan" />
+                      <label className="block text-xs font-bold text-slate-500 mb-1">NIP</label>
+                      <input required type="text" value={formKaryawan.nip} onChange={e => setFormKaryawan({...formKaryawan, nip: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" placeholder="Nomor Induk Pegawai" />
                     </div>
                     <div className="flex-1 min-w-[150px]">
                       <label className="block text-xs font-bold text-slate-500 mb-1">PANGKAT/GOL</label>
@@ -209,7 +209,7 @@ export default function Karyawan() {
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200">
                         <th className="p-4 text-xs font-bold text-slate-500 tracking-wider">NAMA</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 tracking-wider">NIK</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 tracking-wider">NIP</th>
                         <th className="p-4 text-xs font-bold text-slate-500 tracking-wider">PANGKAT/GOL</th>
                         <th className="p-4 text-xs font-bold text-slate-500 tracking-wider">JABATAN</th>
                         <th className="p-4 text-xs font-bold text-slate-500 tracking-wider text-right">AKSI</th>
@@ -222,7 +222,7 @@ export default function Karyawan() {
                         karyawanList.map((k) => (
                           <tr key={k.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
                             <td className="p-4 font-semibold text-slate-800">{k.nama}</td>
-                            <td className="p-4 text-slate-600 font-mono text-sm">{k.nik}</td>
+                            <td className="p-4 text-slate-600 font-mono text-sm">{k.nip}</td>
                             <td className="p-4 text-slate-600">
                               {k.pangkat ? <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-xs font-bold border border-blue-100 inline-block">{k.pangkat}</span> : <span className="text-slate-400">-</span>}
                             </td>
