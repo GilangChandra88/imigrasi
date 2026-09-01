@@ -77,6 +77,23 @@ export default function SuratPerintah() {
     });
   }, [docData, viewMode]);
 
+  const isFormValid = () => {
+    return docData.nomor.trim() !== '' &&
+           docData.menimbang.trim() !== '' &&
+           docData.dasar.length > 0 && docData.dasar.every(d => d.trim() !== '') &&
+           docData.kepada.length > 0 &&
+           docData.untuk.length > 0 && docData.untuk.every(u => u.trim() !== '') &&
+           docData.tempat.trim() !== '' &&
+           docData.tanggal.trim() !== '' &&
+           docData.penandatangan.trim() !== '';
+  };
+
+  const getValidationClass = (val, isActive) => {
+    const isFilled = typeof val === 'string' ? val.trim() !== '' : (Array.isArray(val) ? val.length > 0 && val.every(v => v.trim() !== '') : !!val);
+    if (isFilled) return `border-emerald-400 bg-emerald-50/40 focus:ring-emerald-500 ${isActive ? 'ring-2 ring-emerald-200' : ''}`;
+    return `border-rose-400 bg-rose-50/60 focus:ring-rose-500 ${isActive ? 'ring-2 ring-rose-200' : ''}`;
+  };
+
   const handleGenerateNomor = () => {
     if (!selectedKop || !selectedKode1 || !selectedKode2 || !selectedKode3) {
       alert("Pilih hierarki nomor surat dengan lengkap!");
@@ -276,7 +293,10 @@ export default function SuratPerintah() {
         </div>
 
         <div className="flex gap-3">
-          <button onClick={() => window.print()} className="bg-white text-indigo-600 border border-indigo-200 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-sm">
+          <button 
+            onClick={() => window.print()} 
+            disabled={!isFormValid()}
+            className={`bg-white border px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm ${isFormValid() ? 'text-indigo-600 border-indigo-200 hover:bg-indigo-50' : 'text-slate-400 border-slate-200 opacity-50 cursor-not-allowed'}`}>
             <FaPrint size={16} /> Cetak
           </button>
           <button onClick={handleSaveDocument} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm">
@@ -343,8 +363,8 @@ export default function SuratPerintah() {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-600">Nomor Surat</label>
                   <div className="flex gap-2">
-                    <input type="text" value={docData.nomor} onChange={e => setDocData({...docData, nomor: e.target.value})} className="flex-1 p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm" />
-                    <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-200 transition-colors">Set Nomor</button>
+                    <input type="text" value={docData.nomor} onChange={e => setDocData({...docData, nomor: e.target.value})} className={`flex-1 p-2.5 border rounded-lg outline-none focus:ring-2 font-mono text-sm ${getValidationClass(docData.nomor, false)}`} />
+                    <button onClick={() => setIsNomorModalOpen(true)} className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg text-sm transition-colors whitespace-nowrap">SET NOMOR</button>
                   </div>
                 </div>
 
@@ -355,7 +375,7 @@ export default function SuratPerintah() {
                     onChange={e => setDocData({...docData, menimbang: e.target.value})} 
                     onFocus={() => setActiveField('menimbang')}
                     onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-                    className={`w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed resize-none overflow-hidden ${activeField === 'menimbang' ? 'bg-indigo-50/50' : ''}`}
+                    className={`w-full p-3 border rounded-lg outline-none focus:ring-2 leading-relaxed resize-none overflow-hidden transition-colors ${getValidationClass(docData.menimbang, activeField === 'menimbang')}`}
                     rows={1}
                   />
                 </div>
@@ -375,7 +395,7 @@ export default function SuratPerintah() {
                           }}
                           onFocus={() => setActiveField('dasar')}
                           onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-                          className={`flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed resize-none overflow-hidden ${activeField === 'dasar' ? 'bg-indigo-50/50' : ''}`}
+                          className={`flex-1 p-3 border rounded-lg outline-none focus:ring-2 leading-relaxed resize-none overflow-hidden transition-colors ${getValidationClass(item, activeField === 'dasar')}`}
                           rows={1}
                         />
                         <button onClick={() => {
@@ -403,7 +423,7 @@ export default function SuratPerintah() {
                     <span>Kepada (Pegawai yang ditugaskan)</span>
                     <span className="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Pilih dari panel kiri</span>
                   </label>
-                  <div className="flex flex-col gap-2">
+                  <div className={`flex flex-col gap-2 p-3 border rounded-lg transition-colors ${getValidationClass(docData.kepada, false)}`}>
                     {docData.kepada.length === 0 && <div className="text-sm text-slate-400 italic p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">Belum ada pegawai yang dipilih. Klik tombol + di panel kiri.</div>}
                     {docData.kepada.map(k => (
                       <div key={k.id} className="flex justify-between items-center bg-white border border-slate-200 shadow-sm p-3 rounded-lg">
@@ -432,7 +452,7 @@ export default function SuratPerintah() {
                           }}
                           onFocus={() => setActiveField('untuk')}
                           onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-                          className={`flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed resize-none overflow-hidden ${activeField === 'untuk' ? 'bg-indigo-50/50' : ''}`}
+                          className={`flex-1 p-3 border rounded-lg outline-none focus:ring-2 leading-relaxed resize-none overflow-hidden transition-colors ${getValidationClass(item, activeField === 'untuk')}`}
                           rows={1}
                         />
                         <button onClick={() => {
@@ -458,17 +478,17 @@ export default function SuratPerintah() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-slate-600">Tempat Dikeluarkan</label>
-                    <input type="text" value={docData.tempat} onChange={e => setDocData({...docData, tempat: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" value={docData.tempat} onChange={e => setDocData({...docData, tempat: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.tempat, false)}`} />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-slate-600">Tanggal</label>
-                    <input type="date" value={docData.tanggal} onChange={e => setDocData({...docData, tanggal: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="date" value={docData.tanggal} onChange={e => setDocData({...docData, tanggal: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.tanggal, false)}`} />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-600">Penandatangan</label>
-                  <input type="text" value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <input type="text" value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.penandatangan, false)}`} />
                 </div>
               </div>
             </div>
