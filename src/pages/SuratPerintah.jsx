@@ -664,31 +664,81 @@ export default function SuratPerintah() {
             {isSugestiOpen ? <FaChevronRight size={14} /> : <FaChevronLeft size={14} />}
           </button>
 
-          <div className={`flex-1 flex flex-col w-80 overflow-hidden transition-opacity duration-300 ${isSugestiOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <div className="p-4 border-b border-slate-100 bg-indigo-50/50 shrink-0">
-              <h2 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
-                Suggestion Box
-              </h2>
-              <p className="text-xs text-indigo-600/80 font-medium">Bagian terpilih: <strong className="uppercase bg-indigo-100 px-1 rounded">{activeField}</strong></p>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {activeSugesti.length === 0 ? (
-                <div className="text-center p-6 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-xl">
-                  Belum ada sugesti untuk bagian {activeField.toUpperCase()}.
-                </div>
-              ) : (
-                activeSugesti.map(s => (
-                  <div key={s.id} className="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all group relative cursor-pointer" onClick={() => handleAddSugestiToDoc(s.teks)}>
-                    <p className="text-xs text-slate-600 line-clamp-4 leading-relaxed">{s.teks}</p>
-                    <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 flex gap-1">
-                      <button onClick={(e) => { e.stopPropagation(); handleDeleteSugesti(s.id); }} className="p-1.5 bg-white text-rose-500 hover:bg-rose-50 rounded-lg shadow-sm border border-slate-200"><FaTrash size={10} /></button>
+            <div className={`flex-1 flex flex-col w-80 overflow-hidden transition-opacity duration-300 ${isSugestiOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <div className="p-4 border-b border-slate-100 bg-indigo-50/50 shrink-0">
+                <h2 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                  {(activeField === 'kepada' || activeField === 'penandatangan') ? 'Data Pegawai' : 'Suggestion Box'}
+                </h2>
+                <p className="text-xs text-indigo-600/80 font-medium">Bagian terpilih: <strong className="uppercase bg-indigo-100 px-1 rounded">{activeField}</strong></p>
+              </div>
+              
+              {(activeField === 'kepada' || activeField === 'penandatangan') ? (
+                <>
+                  <div className="p-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
+                    <div className="relative">
+                      <FaSearch className="absolute left-3 top-3 text-slate-400" size={14} />
+                      <input 
+                        type="text" 
+                        placeholder="Cari nama atau NIP..."
+                        value={searchPegawai}
+                        onChange={e => setSearchPegawai(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                      />
                     </div>
-                    <div className="mt-2 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Klik untuk menambahkan</div>
                   </div>
-                ))
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {filteredPegawai.map(k => {
+                      const isSelected = activeField === 'kepada' 
+                        ? docData.kepada.find(selected => selected.id === k.id)
+                        : docData.penandatangan === k.nama;
+                        
+                      return (
+                        <div key={k.id} className={`p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-300'}`} onClick={() => {
+                          if (activeField === 'kepada') {
+                            isSelected ? handleRemoveKepada(k.id) : handleAddKepada(k);
+                          } else if (activeField === 'penandatangan') {
+                            setDocData({...docData, penandatangan: k.nama});
+                          }
+                        }}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm leading-tight mb-0.5">{k.nama}</p>
+                              <p className="text-slate-500 text-xs font-mono">{k.nip}</p>
+                              <p className="text-slate-500 text-xs mt-1 truncate">{k.jabatan}</p>
+                            </div>
+                            {isSelected ? (
+                              <div className="bg-indigo-500 text-white p-1 rounded-full"><FaCheck size={10} /></div>
+                            ) : (
+                              <div className="text-slate-300"><FaPlus size={12} /></div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {filteredPegawai.length === 0 && (
+                      <div className="text-center p-4 text-slate-400 text-sm">Tidak ada pegawai ditemukan.</div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {activeSugesti.length === 0 ? (
+                    <div className="text-center p-6 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                      Belum ada sugesti untuk bagian {activeField.toUpperCase()}.
+                    </div>
+                  ) : (
+                    activeSugesti.map(s => (
+                      <div key={s.id} className="p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all group relative cursor-pointer" onClick={() => handleAddSugestiToDoc(s.teks)}>
+                        <p className="text-xs text-slate-600 line-clamp-4 leading-relaxed">{s.teks}</p>
+                        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteSugesti(s.id); }} className="p-1.5 bg-white text-rose-500 hover:bg-rose-50 rounded-lg shadow-sm border border-slate-200"><FaTrash size={10} /></button>
+                        </div>
+                        <div className="mt-2 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Klik untuk menambahkan</div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
-            </div>
 
             <div className="p-4 border-t border-slate-200 bg-slate-50 shrink-0">
               <form onSubmit={handleSaveNewSugesti} className="flex flex-col gap-2">
@@ -711,6 +761,7 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
 
 
 
