@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import MakSetup from './pages/MakSetup'
 import NomorSuratKanim from './pages/NomorSuratKanim'
-import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt } from 'react-icons/fa'
+import Karyawan from './pages/Karyawan'
+import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers } from 'react-icons/fa'
 import { useState } from 'react'
 
 function Sidebar() {
@@ -10,7 +11,7 @@ function Sidebar() {
   const path = location.pathname;
 
   return (
-    <nav className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300`}>
+    <nav className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300 z-50`}>
       <div className={`p-4 sm:p-6 border-b border-slate-100 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isCollapsed && <span className="font-bold text-xl text-indigo-700 tracking-tight truncate mr-2">Imigrasi DB</span>}
         <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-lg transition-colors shrink-0">
@@ -42,6 +43,14 @@ function Sidebar() {
           <FaFileAlt size={18} className="shrink-0" /> 
           {!isCollapsed && <span className="truncate">Nomor Surat</span>}
         </Link>
+        <Link 
+          to="/karyawan" 
+          title="Karyawan"
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/karyawan' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+        >
+          <FaUsers size={18} className="shrink-0" /> 
+          {!isCollapsed && <span className="truncate">Karyawan</span>}
+        </Link>
       </div>
     </nav>
   );
@@ -57,6 +66,7 @@ function App() {
           <Routes>
             <Route path="/mak-setup" element={<MakSetup />} />
             <Route path="/nomor-surat-kanim" element={<NomorSuratKanim />} />
+            <Route path="/karyawan" element={<Karyawan />} />
             <Route path="/" element={
               <div className="p-8 max-w-4xl mx-auto text-center mt-20 bg-white rounded-2xl shadow-sm border border-slate-200">
                 <h1 className="text-3xl font-bold text-slate-800">Selamat Datang di Imigrasi Super Web</h1>
@@ -67,6 +77,9 @@ function App() {
                   </Link>
                   <Link to="/nomor-surat-kanim" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
                     Buka Nomor Surat
+                  </Link>
+                  <Link to="/karyawan" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
+                    Data Karyawan
                   </Link>
                 </div>
               </div>
