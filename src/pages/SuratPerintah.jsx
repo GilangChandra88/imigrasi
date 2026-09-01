@@ -11,6 +11,7 @@ export default function SuratPerintah() {
   const [activeField, setActiveField] = useState("menimbang"); // 'menimbang', 'dasar', 'untuk'
   const [viewMode, setViewMode] = useState("document");
   const [isSugestiOpen, setIsSugestiOpen] = useState(false);
+  const [pegawaiPanelMode, setPegawaiPanelMode] = useState(null); // null, "kepada", "penandatangan"
   const [newSugesti, setNewSugesti] = useState("");
   
   // Document State
@@ -424,7 +425,7 @@ export default function SuratPerintah() {
                     <span className="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Pilih dari panel kiri</span>
                   </label>
                   <div className={`flex flex-col gap-2 p-3 border rounded-lg transition-colors ${getValidationClass(docData.kepada, false)}`}>
-                    {docData.kepada.length === 0 && <div className="text-sm text-slate-400 italic p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">Belum ada pegawai yang dipilih. Klik tombol + di panel kiri.</div>}
+                    {docData.kepada.length === 0 && <div className="text-sm text-slate-400 italic p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">Belum ada pegawai yang dipilih. Klik tombol Tambah Pegawai di atas.</div>}
                     {docData.kepada.map(k => (
                       <div key={k.id} className="flex justify-between items-center bg-white border border-slate-200 shadow-sm p-3 rounded-lg">
                         <div>
@@ -750,4 +751,9 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
+
+
+
 
