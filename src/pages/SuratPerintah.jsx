@@ -482,13 +482,10 @@ export default function SuratPerintah() {
               <div className="flex justify-center items-center mt-1">
                 <span className="mr-2">NOMOR :</span>
                 <div className="flex items-center gap-2">
-                  <input 
-                    type="text" 
-                    value={docData.nomor} 
-                    onChange={e => setDocData({...docData, nomor: e.target.value})}
-                    className={`font-bold text-base outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent text-center w-64 rounded ${getDocValidationClass(docData.nomor, false)}`}
-                  />
-                  <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200 print:hidden">
+                  <div className={`font-bold text-base bg-transparent text-center px-4 py-0.5 min-w-[250px] rounded ${getDocValidationClass(docData.nomor, false)}`}>
+                    {docData.nomor}
+                  </div>
+                  <button onClick={() => setIsNomorModalOpen(true)} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-sans font-bold hover:bg-indigo-200 print:hidden shadow-sm">
                     SET NOMOR
                   </button>
                 </div>
@@ -765,6 +762,8 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
 
 
 
