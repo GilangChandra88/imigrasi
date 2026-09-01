@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot, query, where } from "firebase/firestore";
-import { FaSearch, FaPlus, FaTrash, FaSave, FaCheck, FaTimes } from "react-icons/fa";
+import { FaSearch, FaPlus, FaTrash, FaSave, FaCheck, FaTimes, FaPrint } from "react-icons/fa";
 
 export default function SuratPerintah() {
   const [PegawaiList, setPegawaiList] = useState([]);
@@ -143,11 +143,11 @@ export default function SuratPerintah() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-100 overflow-hidden relative">
+    <div className="flex-1 flex flex-col h-full bg-slate-100 overflow-hidden relative print:bg-white print:h-auto print:overflow-visible">
       
       {/* MODAL NOMOR SURAT */}
       {isNomorModalOpen && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 print:hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-full">
             <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <h2 className="font-bold text-lg text-slate-800">Generate Nomor Surat</h2>
@@ -234,21 +234,26 @@ export default function SuratPerintah() {
       )}
 
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0 shadow-sm z-10">
+      <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0 shadow-sm z-10 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Buat Surat Perintah</h1>
           <p className="text-slate-500 font-medium text-sm">Desain dan simpan surat perintah secara interaktif</p>
         </div>
-        <button onClick={handleSaveDocument} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm">
-          <FaSave size={16} /> Simpan Surat
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => window.print()} className="bg-white text-indigo-600 border border-indigo-200 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-sm">
+            <FaPrint size={16} /> Cetak
+          </button>
+          <button onClick={handleSaveDocument} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm">
+            <FaSave size={16} /> Simpan Surat
+          </button>
+        </div>
       </div>
 
       {/* 3-Column Layout */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 print:h-auto print:block">
         
         {/* LEFT PANEL: Pegawai List */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10">
+        <div className="w-80 bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 print:hidden">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
             <h2 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
               Pilih Pegawai (Ditugaskan)
@@ -291,9 +296,9 @@ export default function SuratPerintah() {
         </div>
 
         {/* MIDDLE PANEL: Document Preview */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/50 print:p-0 print:bg-transparent print:overflow-visible print:block">
           <div 
-            className="bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex flex-col text-slate-900 relative"
+            className="bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex flex-col text-slate-900 relative print:shadow-none print:max-w-none print:w-full print:min-h-0 print:p-0"
             style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '16px' }}
           >
             
@@ -335,7 +340,7 @@ export default function SuratPerintah() {
               <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('menimbang')}>Menimbang</div>
               <div className="relative group flex items-start">
                 <span className="mr-2 pt-1">:</span>
-                <textarea 
+                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
                   value={docData.menimbang}
                   onChange={e => setDocData({...docData, menimbang: e.target.value})}
                   onClick={() => setActiveField('menimbang')}
@@ -347,7 +352,7 @@ export default function SuratPerintah() {
               <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('dasar')}>Dasar</div>
               <div className="relative group flex items-start">
                 <span className="mr-2 pt-1">:</span>
-                <textarea 
+                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
                   value={docData.dasar}
                   onChange={e => setDocData({...docData, dasar: e.target.value})}
                   onClick={() => setActiveField('dasar')}
@@ -401,7 +406,7 @@ export default function SuratPerintah() {
               <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('untuk')}>Untuk</div>
               <div className="relative group flex items-start">
                 <span className="mr-2 pt-1">:</span>
-                <textarea 
+                <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
                   value={docData.untuk}
                   onChange={e => setDocData({...docData, untuk: e.target.value})}
                   onClick={() => setActiveField('untuk')}
@@ -442,7 +447,7 @@ export default function SuratPerintah() {
         </div>
 
         {/* RIGHT PANEL: Suggestions */}
-        <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10">
+        <div className="w-80 bg-white border-l border-slate-200 flex flex-col shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-10 print:hidden">
           <div className="p-4 border-b border-slate-100 bg-indigo-50/50">
             <h2 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
               Suggestion Box
@@ -471,7 +476,7 @@ export default function SuratPerintah() {
           <div className="p-4 border-t border-slate-200 bg-slate-50">
             <form onSubmit={handleSaveNewSugesti} className="flex flex-col gap-2">
               <label className="text-xs font-bold text-slate-500">TAMBAH SUGESTI BARU</label>
-              <textarea 
+              <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
                 value={newSugesti}
                 onChange={e => setNewSugesti(e.target.value)}
                 placeholder={`Ketik sugesti untuk ${activeField}...`}

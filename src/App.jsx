@@ -12,7 +12,7 @@ function Sidebar() {
   const path = location.pathname;
 
   return (
-    <nav className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300 z-50`}>
+    <nav className={`print:hidden ${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300 z-50`}>
       <div className={`p-4 sm:p-6 border-b border-slate-100 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isCollapsed && <span className="font-bold text-xl text-indigo-700 tracking-tight truncate mr-2">Imigrasi DB</span>}
         <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-lg transition-colors shrink-0">
@@ -71,7 +71,7 @@ function App() {
       <div className="flex min-h-screen bg-slate-50 font-sans">
         <Sidebar />
 
-        <main className="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto">
+        <main className="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto print:h-auto print:overflow-visible">
           <Routes>
             <Route path="/mak-setup" element={<MakSetup />} />
             <Route path="/nomor-surat-kanim" element={<NomorSuratKanim />} />
