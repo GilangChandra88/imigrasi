@@ -8,8 +8,7 @@ import ViewExplorer from "../components/ViewExplorer";
 import ViewColumns from "../components/ViewColumns";
 
 const HIERARCHY = [
-  "Tahun",
-  "Seksi",
+  "KOP",
   "Kode surat 1",
   "Kode surat 2",
   "Kode surat 3"

@@ -15,6 +15,7 @@ const TYPE_COLORS = {
   "AKUN": "text-purple-700 bg-white shadow-sm border-purple-200",
   "Akun": "text-purple-700 bg-white shadow-sm border-purple-200",
   "Seksi": "text-blue-700 bg-white shadow-sm border-blue-200",
+  "KOP": "text-indigo-700 bg-white shadow-sm border-indigo-200",
   "Kode surat 1": "text-emerald-700 bg-white shadow-sm border-emerald-200",
   "Kode surat 2": "text-amber-700 bg-white shadow-sm border-amber-200",
   "Kode surat 3": "text-orange-700 bg-white shadow-sm border-orange-200",
@@ -34,6 +35,7 @@ const WRAPPER_COLORS = {
   "Akun": "bg-purple-100 border-purple-300",
   "AKUN": "bg-purple-100 border-purple-300",
   "Seksi": "bg-blue-100 border-blue-300",
+  "KOP": "bg-indigo-100 border-indigo-300",
   "Kode surat 1": "bg-emerald-100 border-emerald-300",
   "Kode surat 2": "bg-amber-100 border-amber-300",
   "Kode surat 3": "bg-orange-100 border-orange-300",
@@ -122,7 +124,7 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
         {/* Content or Edit Form */}
         {isEditing ? (
           <form onSubmit={handleEdit} className="flex-1 flex gap-2 items-center mr-2 min-w-0">
-            {node.type !== "Tahun" && (
+            {node.type !== hierarchy[0] && (
               <>
                 <input
                   type="text"
@@ -262,12 +264,12 @@ export default function ViewTree({ nodes, hierarchy, onAdd, onDelete, onEdit, fo
   const handleAddRoot = async (e) => {
     e.preventDefault();
     if (!rootName.trim()) return;
-    await onAdd("", rootName.trim(), "Tahun", null);
+    await onAdd("", rootName.trim(), hierarchy[0], null);
     setRootName("");
     setIsAddingRoot(false);
   };
 
-  const rootNodes = nodes.filter((n) => n.parentId === null && n.type === "Tahun");
+  const rootNodes = nodes.filter((n) => n.parentId === null && n.type === hierarchy[0]);
 
   return (
     <div className="pb-12 pt-4">

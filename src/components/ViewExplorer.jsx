@@ -15,6 +15,7 @@ const TYPE_COLORS = {
   "AKUN": "text-purple-600 bg-purple-50 border-purple-200",
   "Akun": "text-purple-600 bg-purple-50 border-purple-200",
   "Seksi": "text-blue-600 bg-blue-50 border-blue-200",
+  "KOP": "text-indigo-600 bg-indigo-50 border-indigo-200",
   "Kode surat 1": "text-emerald-600 bg-emerald-50 border-emerald-200",
   "Kode surat 2": "text-amber-600 bg-amber-50 border-amber-200",
   "Kode surat 3": "text-orange-600 bg-orange-50 border-orange-200",
@@ -186,7 +187,7 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
                   {isEditing ? (
                     <form onSubmit={(e) => handleEditSubmit(e, node.id)} className="flex-1 flex flex-col gap-2 min-w-0" onClick={e => e.stopPropagation()}>
                       <div className="flex gap-2 w-full">
-                        {node.type !== "Tahun" && (
+                        {node.type !== hierarchy[0] && (
                           <input
                             type="text"
                             autoFocus
