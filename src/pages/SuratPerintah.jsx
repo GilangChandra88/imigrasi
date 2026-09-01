@@ -17,7 +17,7 @@ export default function SuratPerintah() {
   const [docData, setDocData] = useState({
     nomor: "WIM.20.IMI.3.UM.02.07-",
     menimbang: "Bahwa dalam rangka pelaksanaan tugas kedinasan, dipandang perlu untuk dikeluarkan Surat Perintah sebagai landasan dalam pelaksanaan kegiatan dimaksud.",
-    dasar: "1. DIPA Kantor Imigrasi Kelas II TPI Singaraja;",
+    dasar: ["DIPA Kantor Imigrasi Kelas II TPI Singaraja;"],
     kepada: [],
     untuk: "1. Melaksanakan tugas kedinasan dengan sebaik-baiknya;\n2. Melaporkan hasil kegiatan tersebut kepada Kepala Kantor Imigrasi Kelas II TPI Singaraja.",
     tempat: "Singaraja",
@@ -103,9 +103,14 @@ export default function SuratPerintah() {
   };
 
   const handleAddSugestiToDoc = (teks) => {
-    const currentText = docData[activeField];
-    const newText = currentText ? `${currentText}\n${teks}` : teks;
-    setDocData({ ...docData, [activeField]: newText });
+    if (activeField === 'dasar') {
+      const currentArray = Array.isArray(docData.dasar) ? docData.dasar : (typeof docData.dasar === 'string' ? docData.dasar.split('\n') : []);
+      setDocData({ ...docData, dasar: [...currentArray, teks] });
+    } else {
+      const currentText = docData[activeField];
+      const newText = currentText ? `${currentText}\n${teks}` : teks;
+      setDocData({ ...docData, [activeField]: newText });
+    }
   };
 
   const handleSaveNewSugesti = async (e) => {
@@ -338,7 +343,37 @@ export default function SuratPerintah() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-600">Dasar</label>
-                  <textarea value={docData.dasar} onChange={e => setDocData({...docData, dasar: e.target.value})} className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] leading-relaxed" />
+                  <div className="flex flex-col gap-3">
+                    {(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar]).map((item, index) => (
+                      <div key={index} className="flex gap-2 items-start group">
+                        <span className="font-bold text-slate-400 pt-3 w-5 text-right">{index + 1}.</span>
+                        <textarea 
+                          value={item} 
+                          onChange={e => {
+                            const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                            newDasar[index] = e.target.value;
+                            setDocData({...docData, dasar: newDasar});
+                          }}
+                          onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                          className="flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] leading-relaxed resize-none overflow-hidden" 
+                        />
+                        <button onClick={() => {
+                          const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                          newDasar.splice(index, 1);
+                          setDocData({...docData, dasar: newDasar});
+                        }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors mt-1 opacity-0 group-hover:opacity-100">
+                          <FaTrash size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button onClick={() => {
+                      const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                      newDasar.push("");
+                      setDocData({...docData, dasar: newDasar});
+                    }} className="self-start flex items-center gap-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors ml-7">
+                      <FaPlus size={12} /> Tambah Dasar
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -439,12 +474,44 @@ export default function SuratPerintah() {
                 <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('dasar')}>Dasar</div>
                 <div className="relative group flex items-start">
                   <span className="mr-2 pt-1">:</span>
-                  <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                    value={docData.dasar}
-                    onChange={e => setDocData({...docData, dasar: e.target.value})}
-                    onClick={() => setActiveField('dasar')}
-                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[100px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
-                  />
+                  <div className="flex-1 flex flex-col gap-1 w-full relative">
+                    {(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar]).map((item, index) => (
+                      <div key={index} className="flex items-start group/item relative">
+                        <span className="mr-2 pt-1 min-w-[15px]">{index + 1}.</span>
+                        <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                          value={item}
+                          onChange={e => {
+                            const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                            newDasar[index] = e.target.value;
+                            setDocData({...docData, dasar: newDasar});
+                          }}
+                          onClick={() => setActiveField('dasar')}
+                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[40px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
+                        />
+                        <button 
+                          onClick={() => {
+                            const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                            newDasar.splice(index, 1);
+                            setDocData({...docData, dasar: newDasar});
+                          }}
+                          className="absolute -right-8 top-1 opacity-0 group-hover/item:opacity-100 p-1.5 text-rose-500 hover:bg-rose-50 rounded print:hidden"
+                        >
+                          <FaTrash size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button 
+                      onClick={() => {
+                        const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                        newDasar.push("");
+                        setDocData({...docData, dasar: newDasar});
+                      }}
+                      className="mt-1 self-start opacity-0 group-hover:opacity-100 flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-all print:hidden ml-6"
+                    >
+                      <FaPlus size={10} /> Tambah Dasar
+                    </button>
+                  </div>
                 </div>
               </div>
 
