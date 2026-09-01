@@ -68,6 +68,15 @@ export default function SuratPerintah() {
     return () => { unsubNomor(); unsubSettings(); };
   }, []);
 
+  // Auto-resize textareas to fit content
+  useEffect(() => {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(t => {
+      t.style.height = 'auto';
+      t.style.height = t.scrollHeight + 'px';
+    });
+  }, [docData, viewMode]);
+
   const handleGenerateNomor = () => {
     if (!selectedKop || !selectedKode1 || !selectedKode2 || !selectedKode3) {
       alert("Pilih hierarki nomor surat dengan lengkap!");
@@ -341,7 +350,14 @@ export default function SuratPerintah() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-600">Menimbang</label>
-                  <textarea value={docData.menimbang} onChange={e => setDocData({...docData, menimbang: e.target.value})} className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] leading-relaxed" />
+                  <textarea 
+                    value={docData.menimbang} 
+                    onChange={e => setDocData({...docData, menimbang: e.target.value})} 
+                    onFocus={() => setActiveField('menimbang')}
+                    onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                    className={`w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed resize-none overflow-hidden ${activeField === 'menimbang' ? 'bg-indigo-50/50' : ''}`}
+                    rows={1}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -357,8 +373,10 @@ export default function SuratPerintah() {
                             newDasar[index] = e.target.value;
                             setDocData({...docData, dasar: newDasar});
                           }}
+                          onFocus={() => setActiveField('dasar')}
                           onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-                          className="flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] leading-relaxed resize-none overflow-hidden" 
+                          className={`flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed resize-none overflow-hidden ${activeField === 'dasar' ? 'bg-indigo-50/50' : ''}`}
+                          rows={1}
                         />
                         <button onClick={() => {
                           const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
@@ -373,6 +391,7 @@ export default function SuratPerintah() {
                       const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
                       newDasar.push("");
                       setDocData({...docData, dasar: newDasar});
+                      setActiveField('dasar');
                     }} className="self-start flex items-center gap-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors ml-7">
                       <FaPlus size={12} /> Tambah Dasar
                     </button>
@@ -411,8 +430,10 @@ export default function SuratPerintah() {
                             newUntuk[index] = e.target.value;
                             setDocData({...docData, untuk: newUntuk});
                           }}
+                          onFocus={() => setActiveField('untuk')}
                           onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-                          className="flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px] leading-relaxed resize-none overflow-hidden" 
+                          className={`flex-1 p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed resize-none overflow-hidden ${activeField === 'untuk' ? 'bg-indigo-50/50' : ''}`}
+                          rows={1}
                         />
                         <button onClick={() => {
                           const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
@@ -427,6 +448,7 @@ export default function SuratPerintah() {
                       const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
                       newUntuk.push("");
                       setDocData({...docData, untuk: newUntuk});
+                      setActiveField('untuk');
                     }} className="self-start flex items-center gap-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors ml-7">
                       <FaPlus size={12} /> Tambah Untuk
                     </button>
@@ -519,7 +541,7 @@ export default function SuratPerintah() {
                             setDocData({...docData, dasar: newDasar});
                           }}
                           onClick={() => setActiveField('dasar')}
-                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[40px] leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
+                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${activeField === 'dasar' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`} rows={1}
                         />
                         <button 
                           onClick={() => {
@@ -592,7 +614,7 @@ export default function SuratPerintah() {
                             setDocData({...docData, untuk: newUntuk});
                           }}
                           onClick={() => setActiveField('untuk')}
-                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[40px] leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`}
+                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${activeField === 'untuk' ? 'ring-2 ring-indigo-200 bg-indigo-50/30 print:!ring-0 print:!bg-transparent print:p-0' : ''}`} rows={1}
                         />
                         <button 
                           onClick={() => {
@@ -708,3 +730,4 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
