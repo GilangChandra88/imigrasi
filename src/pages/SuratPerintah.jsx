@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot, query, where } from "firebase/firestore";
-import { FaSearch, FaPlus, FaTrash, FaSave, FaCheck, FaTimes, FaPrint } from "react-icons/fa";
+import { FaSearch, FaPlus, FaTrash, FaSave, FaCheck, FaTimes, FaPrint, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function SuratPerintah() {
   const [PegawaiList, setPegawaiList] = useState([]);
   const [searchPegawai, setSearchPegawai] = useState("");
   
   const [sugestiList, setSugestiList] = useState([]);
+  const [activeField, setActiveField] = useState("menimbang"); // 'menimbang', 'dasar', 'untuk'
+  const [viewMode, setViewMode] = useState("document");
+  const [isSugestiOpen, setIsSugestiOpen] = useState(false);
   const [newSugesti, setNewSugesti] = useState("");
   
   // Document State
@@ -23,7 +26,7 @@ export default function SuratPerintah() {
   });
 
   const [isNomorModalOpen, setIsNomorModalOpen] = useState(false);
-  const [activeField, setActiveField] = useState("menimbang");  const [viewMode, setViewMode] = useState("document");
+  
 
   // Nomor Surat State
   const [nomorNodes, setNomorNodes] = useState([]);
