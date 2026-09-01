@@ -324,8 +324,8 @@ export default function SuratPerintah() {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-600">Nomor Surat</label>
                   <div className="flex gap-2">
-                    <input type="text" value={docData.nomor} onChange={e => setDocData({...docData, nomor: e.target.value})} className={`flex-1 p-2.5 border rounded-lg outline-none focus:ring-2 font-mono text-sm ${getValidationClass(docData.nomor, false)}`} />
-                    <button onClick={() => setIsNomorModalOpen(true)} className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg text-sm transition-colors whitespace-nowrap">SET NOMOR</button>
+                    <input type="text" value={docData.nomor} readOnly placeholder="Klik tombol SET NOMOR" className={`flex-1 p-2.5 border rounded-lg outline-none cursor-not-allowed font-mono text-sm ${getValidationClass(docData.nomor, false)}`} />
+                    <button onClick={() => setIsNomorModalOpen(true)} className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg text-sm transition-colors whitespace-nowrap shadow-sm">SET NOMOR</button>
                   </div>
                 </div>
 
@@ -762,6 +762,7 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
 
 
 
