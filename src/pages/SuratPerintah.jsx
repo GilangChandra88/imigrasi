@@ -25,7 +25,7 @@ export default function SuratPerintah() {
     untuk: [""],
     tempat: "Singaraja",
     tanggal: new Date().toISOString().split('T')[0], // yyyy-mm-dd
-    penandatangan: ""
+    penandatangan: null
   });
 
   const [isNomorModalOpen, setIsNomorModalOpen] = useState(false);
@@ -84,7 +84,7 @@ export default function SuratPerintah() {
            docData.untuk.length > 0 && docData.untuk.every(u => (u || '').trim() !== '') &&
            (docData.tempat || '').trim() !== '' &&
            (docData.tanggal || '').trim() !== '' &&
-           (docData.penandatangan || '').trim() !== '';
+           docData.penandatangan !== null;
   };
 
   const getValidationClass = (val, isActive) => {
@@ -158,8 +158,14 @@ export default function SuratPerintah() {
 
   const handleAddSugestiToDoc = (teks) => {
     if (activeField === 'dasar' || activeField === 'untuk') {
-      const currentArray = Array.isArray(docData[activeField]) ? docData[activeField] : (typeof docData[activeField] === 'string' ? docData[activeField].split('\n') : []);
-      setDocData({ ...docData, [activeField]: [...currentArray, teks] });
+      const currentArray = Array.isArray(docData[activeField]) ? [...docData[activeField]] : (typeof docData[activeField] === 'string' ? docData[activeField].split('\n') : []);
+      const emptyIndex = currentArray.findIndex(item => typeof item === 'string' && item.trim() === '');
+      if (emptyIndex !== -1) {
+        currentArray[emptyIndex] = teks;
+      } else {
+        currentArray.push(teks);
+      }
+      setDocData({ ...docData, [activeField]: currentArray });
     } else {
       const currentText = docData[activeField];
       const newText = currentText ? `${currentText}\n${teks}` : teks;
@@ -374,29 +380,30 @@ export default function SuratPerintah() {
                           const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
                           newDasar.splice(index, 1);
                           setDocData({...docData, dasar: newDasar});
-                        }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors mt-1 opacity-0 group-hover:opacity-100">
+                        }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors mt-1">
                           <FaTrash size={14} />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => {
-                      const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
-                      newDasar.push("");
-                      setDocData({...docData, dasar: newDasar});
-                      setActiveField('dasar');
-                    }} className="self-start flex items-center gap-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors ml-7">
-                      <FaPlus size={12} /> Tambah Dasar
-                    </button>
+                    <div className="flex gap-2 items-start">
+                      <div className="w-5 shrink-0"></div>
+                      <button onClick={() => {
+                        const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                        newDasar.push("");
+                        setDocData({...docData, dasar: newDasar});
+                        setActiveField('dasar');
+                      }} className="flex-1 flex justify-center items-center gap-2 text-indigo-500 font-bold text-sm border-2 border-dashed border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-300 hover:text-indigo-600 py-3 rounded-lg transition-all">
+                        <FaPlus size={12} /> Tambah Dasar
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-bold text-slate-600">Kepada (Pegawai yang ditugaskan)</label>
-                    <button onClick={() => { setActiveField('kepada'); setIsSugestiOpen(true); }} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"><FaPlus size={10} /> Tambah Pegawai</button>
                   </div>
                   <div className={`flex flex-col gap-2 p-3 border rounded-lg transition-colors ${getValidationClass(docData.kepada, false)}`}>
-                    {docData.kepada.length === 0 && <div className="text-sm text-slate-400 italic p-4 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center">Belum ada pegawai yang dipilih. Klik tombol Tambah Pegawai di atas.</div>}
                     {docData.kepada.map(k => (
                       <div key={k.id} className="flex justify-between items-center bg-white border border-slate-200 shadow-sm p-3 rounded-lg">
                         <div>
@@ -406,6 +413,9 @@ export default function SuratPerintah() {
                         <button onClick={() => handleRemoveKepada(k.id)} className="text-rose-500 hover:text-rose-700 p-2 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={14} /></button>
                       </div>
                     ))}
+                    <button onClick={() => { setActiveField('kepada'); setIsSugestiOpen(true); }} className="w-full flex justify-center items-center gap-2 text-indigo-500 font-bold text-sm border-2 border-dashed border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-300 hover:text-indigo-600 py-3 rounded-lg transition-all mt-1">
+                      <FaPlus size={12} /> Tambah Pegawai
+                    </button>
                   </div>
                 </div>
 
@@ -431,19 +441,22 @@ export default function SuratPerintah() {
                           const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
                           newUntuk.splice(index, 1);
                           setDocData({...docData, untuk: newUntuk});
-                        }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors mt-1 opacity-0 group-hover:opacity-100">
+                        }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors mt-1">
                           <FaTrash size={14} />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => {
-                      const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
-                      newUntuk.push("");
-                      setDocData({...docData, untuk: newUntuk});
-                      setActiveField('untuk');
-                    }} className="self-start flex items-center gap-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors ml-7">
-                      <FaPlus size={12} /> Tambah Untuk
-                    </button>
+                    <div className="flex gap-2 items-start">
+                      <div className="w-5 shrink-0"></div>
+                      <button onClick={() => {
+                        const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
+                        newUntuk.push("");
+                        setDocData({...docData, untuk: newUntuk});
+                        setActiveField('untuk');
+                      }} className="flex-1 flex justify-center items-center gap-2 text-indigo-500 font-bold text-sm border-2 border-dashed border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-300 hover:text-indigo-600 py-3 rounded-lg transition-all">
+                        <FaPlus size={12} /> Tambah Untuk
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -461,9 +474,20 @@ export default function SuratPerintah() {
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm font-bold text-slate-600">Penandatangan</label>
-                      <button onClick={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"><FaPlus size={10} /> Pilih Pegawai</button>
                     </div>
-                    <input type="text" onFocus={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }} value={docData.penandatangan} onChange={e => setDocData({...docData, penandatangan: e.target.value})} className={`w-full p-2.5 border rounded-lg outline-none focus:ring-2 transition-colors ${getValidationClass(docData.penandatangan, false)}`} />
+                    {docData.penandatangan ? (
+                      <div className={`flex justify-between items-center bg-white border border-slate-200 shadow-sm p-3 rounded-lg ${getValidationClass(docData.penandatangan.nama, false)}`}>
+                        <div onClick={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }} className="cursor-pointer flex-1">
+                          <p className="font-bold text-slate-700 text-sm">{docData.penandatangan.nama}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{docData.penandatangan.nip} - {docData.penandatangan.jabatan}</p>
+                        </div>
+                        <button onClick={() => setDocData({...docData, penandatangan: null})} className="text-rose-500 hover:text-rose-700 p-2 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={14} /></button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }} className={`w-full flex justify-center items-center gap-2 font-bold text-sm border-2 border-dashed py-3 rounded-lg transition-all ${!docData.penandatangan ? 'border-rose-400 bg-rose-50/50 text-rose-500 hover:bg-rose-100' : 'border-indigo-200 bg-indigo-50/50 text-indigo-500 hover:bg-indigo-100'}`}>
+                        <FaPlus size={12} /> Pilih Penandatangan
+                      </button>
+                    )}
                   </div>
               </div>
             </div>
@@ -471,148 +495,164 @@ export default function SuratPerintah() {
 
           {/* DOCUMENT PREVIEW */}
           <div 
-            className={`bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] p-10 sm:p-14 flex-col text-slate-900 relative print:shadow-none print:max-w-none print:w-full print:min-h-0 print:p-0 ${viewMode === 'document' ? 'flex' : 'hidden print:flex'}`}
+            className={`bg-white shadow-xl w-full max-w-[794px] h-fit min-h-[1123px] pl-[3cm] pr-[2cm] py-[2cm] print:p-0 flex-col text-slate-900 relative print:shadow-none print:max-w-none print:w-full print:min-h-0 ${viewMode === 'document' ? 'flex' : 'hidden print:flex'}`}
             style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '16px' }}
           >
             
-            {/* Header / KOP Placeholder */}
-            <div className="border-b-[3px] border-slate-900 pb-4 mb-6 flex items-center justify-center text-center relative" style={{ fontFamily: "Arial, Helvetica, sans-serif", fontSize: '13.33px' }}>
-              <div className="absolute left-0 top-0 w-20 h-20 bg-slate-100 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 text-xs font-sans">Logo</div>
-              <div>
-                <h3 className="font-bold leading-tight uppercase">Kementerian Imigrasi dan Pemasyarakatan</h3>
-                <h3 className="font-bold leading-tight uppercase">Direktorat Jenderal Imigrasi</h3>
-                <h2 className="font-bold leading-tight uppercase mt-0.5" style={{ fontSize: '16px' }}>Kantor Imigrasi Kelas II TPI Singaraja</h2>
-                <p className="mt-0.5">Jl. Raya Singaraja Seririt, Pemaron, Buleleng, Bali. Telepon (0362) 32174</p>
-                <p>Laman: www.singaraja.imigrasi.go.id Pos-el: kanim_singaraja@imigrasi.go.id</p>
+              {/* Header / KOP Placeholder */}
+              <div className="border-b-[4px] border-black pb-2 mb-8 flex items-center text-center relative" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+                <div className="w-[90px] h-[90px] shrink-0 bg-slate-100 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 text-xs font-sans print:border-black print:text-black">Logo</div>
+                <div className="flex-1 ml-4 pr-10">
+                  <h3 className="leading-tight uppercase text-[13px]">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</h3>
+                  <h3 className="leading-tight uppercase text-[13px]">DIREKTORAT JENDERAL IMIGRASI</h3>
+                  <h3 className="leading-tight uppercase text-[13px]">KANTOR WILAYAH DIREKTORAT JENDERAL IMIGRASI BALI</h3>
+                  <h2 className="font-bold leading-tight uppercase mt-0.5 text-[16px]">KANTOR IMIGRASI KELAS II TPI SINGARAJA</h2>
+                  <p className="mt-0.5 text-[11px]">Jl. Raya Singaraja Seririt, Pemaron, Buleleng, Bali. Telepon (0362) 32174</p>
+                  <p className="text-[11px]">Laman: www.singaraja.imigrasi.go.id Pos-el: kanim_singaraja@imigrasi.go.id</p>
+                </div>
               </div>
-            </div>
 
-            {/* Judul Surat */}
-            <div className="text-center mb-8">
-              <h2 className="font-bold text-lg underline uppercase tracking-wider">Surat Perintah</h2>
-              <div className="flex justify-center items-center mt-1">
-                <span className="mr-2">NOMOR :</span>
-                <div className="flex items-center gap-2">
-                  <div className={`font-bold text-base bg-transparent text-center px-4 py-0.5 min-w-[250px] rounded ${getDocValidationClass(docData.nomor, false)}`}>
+              {/* Judul Surat */}
+              <div className="text-center mb-8">
+                <h2 className="font-bold text-[17px] uppercase tracking-wider">SURAT PERINTAH</h2>
+                <div className="flex justify-center items-center mt-0.5">
+                  <span className="font-bold mr-2 text-[14px]">NOMOR :</span>
+                  {/* Form view */}
+                  <div className={`font-bold text-[14px] bg-transparent text-center px-2 py-0.5 min-w-[250px] rounded print:hidden ${getDocValidationClass(docData.nomor, false)}`}>
+                    {docData.nomor}
+                  </div>
+                  {/* Print view */}
+                  <div className="hidden print:block font-bold text-[14px]">
                     {docData.nomor}
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Isi Surat */}
-            <div className="flex-1 flex flex-col gap-3 text-justify">
-              
-              <div className="grid grid-cols-[100px_1fr] gap-4">
-                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('menimbang')}>Menimbang</div>
-                <div className="relative group flex items-start">
-                  <span className="mr-2 pt-1">:</span>
-                  <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                    value={docData.menimbang}
-                    onChange={e => setDocData({...docData, menimbang: e.target.value})}
-                    onClick={() => setActiveField('menimbang')}
-                    className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent min-h-[80px] leading-relaxed ${getDocValidationClass(docData.menimbang, activeField === 'menimbang')}`}
-                  />
-                </div>
-
-                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('dasar')}>Dasar</div>
-                <div className="relative group flex items-start">
-                  <span className="mr-2 pt-1">:</span>
-                  <div className="flex-1 flex flex-col gap-1 w-full relative">
-                    {(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar]).map((item, index) => (
-                      <div key={index} className="flex items-start group/item relative">
-                        <span className="mr-2 pt-1 min-w-[15px]">{index + 1}.</span>
-                        <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                          value={item}
-                          onChange={e => {
-                            const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
-                            newDasar[index] = e.target.value;
-                            setDocData({...docData, dasar: newDasar});
-                          }}
-                          onClick={() => setActiveField('dasar')}
-                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${getDocValidationClass(item, activeField === 'dasar')}`} rows={1}
-                        />
-                        <button 
-                          onClick={() => {
-                            const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
-                            newDasar.splice(index, 1);
-                            setDocData({...docData, dasar: newDasar});
-                          }}
-                          className="absolute -right-8 top-1 opacity-0 group-hover/item:opacity-100 p-1.5 text-rose-500 hover:bg-rose-50 rounded print:hidden"
-                        >
-                          <FaTrash size={12} />
-                        </button>
+              {/* Isi Surat */}
+              <div className="flex-1 flex flex-col gap-3 text-justify text-[15px] leading-snug">
+                
+                <div className="grid grid-cols-[110px_1fr] gap-2">
+                  <div className="pt-1 cursor-pointer" onClick={() => setActiveField('menimbang')}>Menimbang</div>
+                  <div className="relative group flex items-start w-full">
+                    <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                    <div className="flex-1 w-full relative">
+                      <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                        value={docData.menimbang}
+                        onChange={e => setDocData({...docData, menimbang: e.target.value})}
+                        onClick={() => setActiveField('menimbang')}
+                        className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 rounded min-h-[80px] leading-relaxed text-justify print:hidden ${getDocValidationClass(docData.menimbang, activeField === 'menimbang')}`}
+                      />
+                      <div className="hidden print:block w-full leading-relaxed text-justify py-1">
+                        {docData.menimbang}
                       </div>
-                    ))}
-                    
-                    <button 
-                      onClick={() => {
-                        const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
-                        newDasar.push("");
-                        setDocData({...docData, dasar: newDasar});
-                      }}
-                      className="mt-1 self-start opacity-0 group-hover:opacity-100 flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-all print:hidden ml-6"
-                    >
-                      <FaPlus size={10} /> Tambah Dasar
-                    </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 cursor-pointer" onClick={() => setActiveField('dasar')}>Dasar</div>
+                  <div className="relative group flex items-start">
+                    <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                    <div className="flex-1 flex flex-col gap-1 w-full relative">
+                      {(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar]).map((item, index) => (
+                        <div key={index} className="flex items-start group/item relative">
+                          <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
+                          <div className="flex-1 w-full relative">
+                            <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                              value={item}
+                              onChange={e => {
+                                const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                                newDasar[index] = e.target.value;
+                                setDocData({...docData, dasar: newDasar});
+                              }}
+                              onClick={() => setActiveField('dasar')}
+                              className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 rounded print:hidden leading-relaxed text-justify ${getDocValidationClass(item, activeField === 'dasar')}`} rows={1}
+                            />
+                            <div className="hidden print:block w-full leading-relaxed text-justify py-1">
+                              {item}
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                              newDasar.splice(index, 1);
+                              setDocData({...docData, dasar: newDasar});
+                            }}
+                            className="absolute -right-8 top-1 opacity-0 group-hover/item:opacity-100 p-1.5 text-rose-500 hover:bg-rose-50 rounded print:hidden"
+                          >
+                            <FaTrash size={12} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      <button 
+                        onClick={() => {
+                          const newDasar = [...(Array.isArray(docData.dasar) ? docData.dasar : [docData.dasar])];
+                          newDasar.push("");
+                          setDocData({...docData, dasar: newDasar});
+                        }}
+                        className="mt-1 self-start opacity-0 group-hover:opacity-100 flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-all print:hidden ml-6"
+                      >
+                        <FaPlus size={10} /> Tambah Dasar
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="text-center font-bold tracking-widest my-4">M E N U G A S K A N :</div>
+                <div className="text-center font-bold tracking-widest my-4 text-[15px]">M E N U G A S K A N :</div>
 
-              <div className="grid grid-cols-[100px_1fr] gap-4">
-                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('kepada')}>Kepada</div>
-                <div className={`flex rounded p-1 print:p-0 ${getDocValidationClass(docData.kepada, activeField === 'kepada')}`}>
-                  <span className="mr-2 pt-1">:</span>
-                  <div className="flex-1 flex flex-col gap-4 pt-1">
+                <div className="grid grid-cols-[110px_1fr] gap-2">
+                  <div className="pt-1 cursor-pointer" onClick={() => setActiveField('kepada')}>Kepada</div>
+                  <div className={`flex flex-col gap-4 rounded p-1 print:p-0 ${getDocValidationClass(docData.kepada, activeField === 'kepada')}`}>
                     {docData.kepada.map((p, idx) => (
-                      <div key={p.id} className="grid grid-cols-[20px_1fr] gap-2 group relative">
-                        <span>{idx + 1}.</span>
-                        <div className="grid grid-cols-[100px_1fr] gap-2">
-                          <span>Nama</span>
-                          <span className="font-bold uppercase">: {p.nama}</span>
-                          <span>NIP</span>
-                          <span>: {p.nip}</span>
-                          <span>Pangkat / Gol.</span>
-                          <span>: {p.pangkat}</span>
-                          <span>Jabatan</span>
-                          <span>: {p.jabatan}</span>
+                      <div key={p.id} className="flex group relative">
+                        <span className="w-[20px] shrink-0 text-center">:</span>
+                        <span className="w-[25px] shrink-0">{idx + 1}</span>
+                        <div className="flex-1 grid grid-cols-[110px_15px_1fr] gap-y-1">
+                          <span>Nama</span><span>:</span><span>{p.nama}</span>
+                          <span>NIP</span><span>:</span><span>{p.nip}</span>
+                          <span>Pangkat / Gol.</span><span>:</span><span>{p.pangkat}</span>
+                          <span>Jabatan</span><span>:</span><span>{p.jabatan}</span>
                         </div>
                         <button onClick={() => handleRemoveKepada(p.id)} className="absolute right-0 top-0 text-rose-500 opacity-0 group-hover:opacity-100 hover:bg-rose-50 p-1 rounded print:hidden"><FaTrash size={12} /></button>
                       </div>
                     ))}
                     {docData.kepada.length === 0 && (
-                      <div className="text-slate-400 italic text-sm py-2">Belum ada pegawai dipilih...</div>
+                      <div className="flex items-center">
+                        <span className="w-[20px] shrink-0 text-center">:</span>
+                        <div className="text-slate-400 italic text-sm py-2 px-2">Belum ada pegawai dipilih...</div>
+                      </div>
                     )}
                   </div>
-                </div>
 
-                <div className="font-semibold pt-1 cursor-pointer" onClick={() => setActiveField('untuk')}>Untuk</div>
-                <div className="relative group flex items-start">
-                  <span className="mr-2 pt-1">:</span>
-                  <div className="flex-1 flex flex-col gap-1 w-full relative">
-                    {(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk]).map((item, index) => (
-                      <div key={index} className="flex items-start group/item relative">
-                        <span className="mr-2 pt-1 min-w-[15px]">{index + 1}.</span>
-                        <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
-                          value={item}
-                          onChange={e => {
-                            const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
-                            newUntuk[index] = e.target.value;
-                            setDocData({...docData, untuk: newUntuk});
-                          }}
-                          onClick={() => setActiveField('untuk')}
-                          className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 print:p-0 rounded print:!bg-transparent  leading-relaxed ${getDocValidationClass(item, activeField === 'untuk')}`} rows={1}
-                        />
-                        <button 
-                          onClick={() => {
-                            const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
-                            newUntuk.splice(index, 1);
-                            setDocData({...docData, untuk: newUntuk});
-                          }}
-                          className="absolute -right-8 top-1 opacity-0 group-hover/item:opacity-100 p-1.5 text-rose-500 hover:bg-rose-50 rounded print:hidden"
-                        >
+                  <div className="pt-1 cursor-pointer" onClick={() => setActiveField('untuk')}>Untuk</div>
+                  <div className="relative group flex items-start">
+                    <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                    <div className="flex-1 flex flex-col gap-1 w-full relative">
+                      {(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk]).map((item, index) => (
+                        <div key={index} className="flex items-start group/item relative">
+                          <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
+                          <div className="flex-1 w-full relative">
+                            <textarea onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}  
+                              value={item}
+                              onChange={e => {
+                                const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
+                                newUntuk[index] = e.target.value;
+                                setDocData({...docData, untuk: newUntuk});
+                              }}
+                              onClick={() => setActiveField('untuk')}
+                              className={`w-full bg-transparent outline-none resize-none overflow-hidden hover:bg-slate-50 transition-colors p-1 rounded print:hidden leading-relaxed text-justify ${getDocValidationClass(item, activeField === 'untuk')}`} rows={1}
+                            />
+                            <div className="hidden print:block w-full leading-relaxed text-justify py-1">
+                              {item}
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const newUntuk = [...(Array.isArray(docData.untuk) ? docData.untuk : [docData.untuk])];
+                              newUntuk.splice(index, 1);
+                              setDocData({...docData, untuk: newUntuk});
+                            }}
+                            className="absolute -right-8 top-1 opacity-0 group-hover/item:opacity-100 p-1.5 text-rose-500 hover:bg-rose-50 rounded print:hidden"
+                          >
                           <FaTrash size={12} />
                         </button>
                       </div>
@@ -631,31 +671,43 @@ export default function SuratPerintah() {
                   </div>
                 </div>
               </div>
-              
-              <div className="mt-16 grid grid-cols-2">
-                <div>
-                  {/* QR Code Placeholder */}
-                  <div className="w-24 h-24 bg-slate-100 border-2 border-slate-300 mt-12 flex items-center justify-center text-xs text-slate-400 font-sans text-center p-2">QR Code TTE</div>
+
+              {/* Footer */}
+              <div className="break-inside-avoid">
+                <div className="mt-16 grid grid-cols-[1fr_250px] gap-4">
+                  <div className="flex items-end pb-8">
+                    {/* QR Code Placeholder */}
+                    <div className="w-24 h-24 bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-xs text-slate-400 font-sans text-center p-2">QR Code TTE</div>
+                  </div>
+                  <div className="text-[15px] flex flex-col">
+                    <div className="flex mb-1 items-center">
+                    <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className={`outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-[70px] rounded ${getDocValidationClass(docData.tempat, false)}`} />
+                    <span className="mr-2">,</span>
+                    <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className={`outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-[140px] font-sans text-sm rounded ${getDocValidationClass(docData.tanggal, false)}`} />
+                  </div>
+                  <div className="mb-2 uppercase">
+                    Kepala,
+                  </div>
+                  
+                  {/* Signature Space */}
+                  <div className="h-[60px]"></div>
+
+                  <div className="mt-2">
+                      <div>
+                        <input 
+                          value={docData.penandatangan?.nama || ''} 
+                          readOnly
+                          onClick={() => { setActiveField('penandatangan'); setIsSugestiOpen(true); }}
+                          className={`font-bold outline-none border-transparent hover:bg-slate-50 focus:bg-indigo-50 bg-transparent w-full rounded ${getDocValidationClass(docData.penandatangan?.nama, activeField === 'penandatangan')} cursor-pointer`} 
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm">
-                  <div className="grid grid-cols-[100px_1fr] gap-1 mb-2">
-                    <span>Dikeluarkan di</span>
-                    <span>: <input value={docData.tempat} onChange={e=>setDocData({...docData, tempat: e.target.value})} className={`outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 rounded ${getDocValidationClass(docData.tempat, false)}`} /></span>
-                    
-                    <span>Pada Tanggal</span>
-                    <span>: <input type="date" value={docData.tanggal} onChange={e=>setDocData({...docData, tanggal: e.target.value})} className={`outline-none border-b border-transparent hover:border-slate-300 focus:border-indigo-500 bg-transparent w-32 font-sans text-xs rounded ${getDocValidationClass(docData.tanggal, false)}`} /></span>
-                  </div>
-                  <div className="font-bold mb-16 uppercase">
-                    KEPALA KANTOR,
-                  </div>
-                  <div>
-                    <input 
-                      value={docData.penandatangan} 
-                      onChange={e=>setDocData({...docData, penandatangan: e.target.value})} 
-                      onClick={() => setActiveField('penandatangan')}
-                      className={`font-bold underline outline-none border-transparent hover:bg-slate-50 focus:bg-indigo-50 bg-transparent w-full rounded ${getDocValidationClass(docData.penandatangan, activeField === 'penandatangan')}`} 
-                    />
-                  </div>
+
+                {/* Footer Notes */}
+                <div className="mt-16 text-center text-[11px] leading-tight pt-4 border-t border-black">
+                  Dokumen ini telah ditandatangani secara elektronik menggunakan sertifikat elektronik<br/>yang diterbitkan oleh Balai Besar Sertifikasi Elektronik (BSrE), Badan Siber dan Sandi Negara (BSSN).
                 </div>
               </div>
 
@@ -699,14 +751,14 @@ export default function SuratPerintah() {
                     {filteredPegawai.map(k => {
                       const isSelected = activeField === 'kepada' 
                         ? docData.kepada.find(selected => selected.id === k.id)
-                        : docData.penandatangan === k.nama;
+                        : docData.penandatangan?.id === k.id;
                         
                       return (
                         <div key={k.id} className={`p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-300'}`} onClick={() => {
                           if (activeField === 'kepada') {
                             isSelected ? handleRemoveKepada(k.id) : handleAddKepada(k);
                           } else if (activeField === 'penandatangan') {
-                            setDocData({...docData, penandatangan: k.nama});
+                            setDocData({...docData, penandatangan: k});
                           }
                         }}>
                           <div className="flex justify-between items-start">
@@ -770,6 +822,33 @@ export default function SuratPerintah() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

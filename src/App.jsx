@@ -3,13 +3,18 @@ import MakSetup from './pages/MakSetup'
 import NomorSuratKanim from './pages/NomorSuratKanim'
 import Pegawai from './pages/Pegawai'
 import SuratPerintah from './pages/SuratPerintah'
-import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaFileSignature } from 'react-icons/fa'
+import SuratEditor from './pages/SuratEditor'
+import TemplateBuilder from './pages/TemplateBuilder'
+import SuratWriter from './pages/SuratWriter'
+import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaFileSignature, FaLayerGroup } from 'react-icons/fa'
 import { useState } from 'react'
 
 function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const path = location.pathname;
+
+  const isActive = (prefix) => path === prefix || path.startsWith(prefix + '/');
 
   return (
     <nav className={`print:hidden ${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300 z-50`}>
@@ -60,6 +65,23 @@ function Sidebar() {
           <FaFileSignature size={18} className="shrink-0" /> 
           {!isCollapsed && <span className="truncate">Surat Perintah</span>}
         </Link>
+
+        {/* Divider - Template Engine section */}
+        {!isCollapsed && (
+          <div className="pt-3 pb-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Template Engine</p>
+          </div>
+        )}
+        {isCollapsed && <div className="border-t border-slate-100 my-1" />}
+
+        <Link 
+          to="/surat-editor" 
+          title="Surat Editor"
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/surat-editor') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+        >
+          <FaLayerGroup size={18} className="shrink-0" /> 
+          {!isCollapsed && <span className="truncate">Surat Editor</span>}
+        </Link>
       </div>
     </nav>
   );
@@ -77,11 +99,16 @@ function App() {
             <Route path="/nomor-surat-kanim" element={<NomorSuratKanim />} />
             <Route path="/Pegawai" element={<Pegawai />} />
             <Route path="/surat-perintah" element={<SuratPerintah />} />
+            {/* Template Engine Routes */}
+            <Route path="/surat-editor" element={<SuratEditor />} />
+            <Route path="/surat-editor/builder" element={<TemplateBuilder />} />
+            <Route path="/surat-editor/builder/:templateId" element={<TemplateBuilder />} />
+            <Route path="/surat-editor/tulis/:templateId" element={<SuratWriter />} />
             <Route path="/" element={
               <div className="p-8 max-w-4xl mx-auto text-center mt-20 bg-white rounded-2xl shadow-sm border border-slate-200">
                 <h1 className="text-3xl font-bold text-slate-800">Selamat Datang di Imigrasi Super Web</h1>
-                <p className="mt-4 text-slate-500 font-medium">Pilih menu MAK Setup di panel sebelah kiri untuk mengatur hierarki data.</p>
-                <div className="mt-8 flex gap-4 justify-center">
+                <p className="mt-4 text-slate-500 font-medium">Pilih menu di panel sebelah kiri untuk mulai bekerja.</p>
+                <div className="mt-8 flex flex-wrap gap-4 justify-center">
                   <Link to="/mak-setup" className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-sm transition-all">
                     Buka MAK Setup
                   </Link>
@@ -93,6 +120,9 @@ function App() {
                   </Link>
                   <Link to="/surat-perintah" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
                     Surat Perintah
+                  </Link>
+                  <Link to="/surat-editor" className="inline-block bg-indigo-50 text-indigo-700 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-100 shadow-sm transition-all">
+                    ✨ Surat Editor
                   </Link>
                 </div>
               </div>
