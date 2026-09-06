@@ -1,20 +1,32 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import Login from './pages/Login'
 import MakSetup from './pages/MakSetup'
 import NomorSuratKanim from './pages/NomorSuratKanim'
 import Pegawai from './pages/Pegawai'
-import SuratPerintah from './pages/SuratPerintah'
 import SuratEditor from './pages/SuratEditor'
 import TemplateBuilder from './pages/TemplateBuilder'
 import SuratWriter from './pages/SuratWriter'
-import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaFileSignature, FaLayerGroup } from 'react-icons/fa'
+import TemplateBuilderV2 from './pages/TemplateBuilderV2'
+import SuratWriterV2 from './pages/SuratWriterV2'
+import TemplateListV2 from './pages/TemplateListV2'
+import Dashboard from './pages/Dashboard'
+import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaLayerGroup, FaSignOutAlt } from 'react-icons/fa'
 import { useState } from 'react'
+import { signOut } from 'firebase/auth'
+import { auth } from './firebase'
 
 function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const path = location.pathname;
+  const { isSuperAdmin, isAdmin, currentUser, userData, userRole } = useAuth();
 
   const isActive = (prefix) => path === prefix || path.startsWith(prefix + '/');
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   return (
     <nav className={`print:hidden ${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300 z-50`}>
@@ -33,107 +45,163 @@ function Sidebar() {
           <FaHome size={18} className="shrink-0" /> 
           {!isCollapsed && <span className="truncate">Dashboard</span>}
         </Link>
-        <Link 
-          to="/mak-setup" 
-          title="MAK Setup"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/mak-setup' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
-        >
-          <FaSitemap size={18} className="shrink-0" /> 
-          {!isCollapsed && <span className="truncate">MAK Setup</span>}
-        </Link>
-        <Link 
-          to="/nomor-surat-kanim" 
-          title="Nomor Surat Kanim"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/nomor-surat-kanim' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
-        >
-          <FaFileAlt size={18} className="shrink-0" /> 
-          {!isCollapsed && <span className="truncate">Nomor Surat</span>}
-        </Link>
-        <Link 
-          to="/Pegawai" 
-          title="Pegawai"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/Pegawai' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
-        >
-          <FaUsers size={18} className="shrink-0" /> 
-          {!isCollapsed && <span className="truncate">Pegawai</span>}
-        </Link>
-        <Link 
-          to="/surat-perintah" 
-          title="Surat Perintah"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/surat-perintah' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
-        >
-          <FaFileSignature size={18} className="shrink-0" /> 
-          {!isCollapsed && <span className="truncate">Surat Perintah</span>}
-        </Link>
+        
+        {isSuperAdmin && (
+          <Link 
+            to="/mak-setup" 
+            title="MAK Setup"
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/mak-setup' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          >
+            <FaSitemap size={18} className="shrink-0" /> 
+            {!isCollapsed && <span className="truncate">MAK Setup</span>}
+          </Link>
+        )}
 
-        {/* Divider - Template Engine section */}
+        {isAdmin && (
+          <Link 
+            to="/nomor-surat-kanim" 
+            title="Nomor Surat Kanim"
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/nomor-surat-kanim' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          >
+            <FaFileAlt size={18} className="shrink-0" /> 
+            {!isCollapsed && <span className="truncate">Nomor Surat</span>}
+          </Link>
+        )}
+
+        {isSuperAdmin && (
+          <Link 
+            to="/Pegawai" 
+            title="Pegawai"
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/Pegawai') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          >
+            <FaUsers size={18} className="shrink-0" /> 
+            {!isCollapsed && <span className="truncate">Data Pegawai</span>}
+          </Link>
+        )}
+
+        {isAdmin && (
+          <Link 
+            to="/surat-editor" 
+            title="Template Builder"
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/surat-editor') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          >
+            <FaLayerGroup size={18} className="shrink-0" /> 
+            {!isCollapsed && <span className="truncate">Template Builder</span>}
+          </Link>
+        )}
+
+        {isAdmin && (
+          <Link 
+            to="/templates-v2" 
+            title="Template V2"
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/templates-v2') || isActive('/builder-v2') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          >
+            <FaLayerGroup size={18} className="shrink-0" /> 
+            {!isCollapsed && <span className="truncate">Template V2</span>}
+          </Link>
+        )}
+      </div>
+
+      <div className="p-4 border-t border-slate-200 bg-slate-50 mt-auto">
         {!isCollapsed && (
-          <div className="pt-3 pb-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Template Engine</p>
+          <div className="mb-4">
+            <p className="text-xs font-bold text-slate-800 truncate">{userData?.nama || currentUser.email}</p>
+            <p className="text-[10px] text-slate-500 truncate">{userRole || 'Pegawai'}</p>
           </div>
         )}
-        {isCollapsed && <div className="border-t border-slate-100 my-1" />}
-
-        <Link 
-          to="/surat-editor" 
-          title="Surat Editor"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/surat-editor') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+        <button 
+          onClick={handleLogout}
+          className={`w-full flex items-center gap-2 font-bold text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 p-3 rounded-xl transition-colors ${isCollapsed ? 'justify-center' : ''}`}
         >
-          <FaLayerGroup size={18} className="shrink-0" /> 
-          {!isCollapsed && <span className="truncate">Surat Editor</span>}
-        </Link>
+          <FaSignOutAlt size={16} />
+          {!isCollapsed && <span>Keluar</span>}
+        </button>
       </div>
     </nav>
   );
 }
 
-function App() {
+function ProtectedRoute({ children, requireRole }) {
+  const { currentUser, isSuperAdmin, isAdmin } = useAuth();
+  if (!currentUser) return <Navigate to="/login" />;
+  
+  if (requireRole === 'Super Admin' && !isSuperAdmin) return <Navigate to="/" />;
+  if (requireRole === 'Admin' && !isAdmin) return <Navigate to="/" />;
+  
+  return children;
+}
+
+function AppContent() {
+  const { currentUser } = useAuth();
+  
   return (
     <Router>
       <div className="flex min-h-screen bg-slate-50 font-sans">
-        <Sidebar />
+        {currentUser && <Sidebar />}
 
         <main className="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto print:h-auto print:overflow-visible">
           <Routes>
-            <Route path="/mak-setup" element={<MakSetup />} />
-            <Route path="/nomor-surat-kanim" element={<NomorSuratKanim />} />
-            <Route path="/Pegawai" element={<Pegawai />} />
-            <Route path="/surat-perintah" element={<SuratPerintah />} />
-            {/* Template Engine Routes */}
-            <Route path="/surat-editor" element={<SuratEditor />} />
-            <Route path="/surat-editor/builder" element={<TemplateBuilder />} />
-            <Route path="/surat-editor/builder/:templateId" element={<TemplateBuilder />} />
-            <Route path="/surat-editor/tulis/:templateId" element={<SuratWriter />} />
+            <Route path="/login" element={<Login />} />
+            
             <Route path="/" element={
-              <div className="p-8 max-w-4xl mx-auto text-center mt-20 bg-white rounded-2xl shadow-sm border border-slate-200">
-                <h1 className="text-3xl font-bold text-slate-800">Selamat Datang di Imigrasi Super Web</h1>
-                <p className="mt-4 text-slate-500 font-medium">Pilih menu di panel sebelah kiri untuk mulai bekerja.</p>
-                <div className="mt-8 flex flex-wrap gap-4 justify-center">
-                  <Link to="/mak-setup" className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-sm transition-all">
-                    Buka MAK Setup
-                  </Link>
-                  <Link to="/nomor-surat-kanim" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
-                    Buka Nomor Surat
-                  </Link>
-                  <Link to="/Pegawai" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
-                    Data Pegawai
-                  </Link>
-                  <Link to="/surat-perintah" className="inline-block bg-white text-indigo-600 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 shadow-sm transition-all">
-                    Surat Perintah
-                  </Link>
-                  <Link to="/surat-editor" className="inline-block bg-indigo-50 text-indigo-700 border border-indigo-200 px-8 py-3 rounded-xl font-bold hover:bg-indigo-100 shadow-sm transition-all">
-                    ✨ Surat Editor
-                  </Link>
-                </div>
-              </div>
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/mak-setup" element={
+              <ProtectedRoute requireRole="Super Admin"><MakSetup /></ProtectedRoute>
+            } />
+            
+            <Route path="/nomor-surat-kanim" element={
+              <ProtectedRoute requireRole="Admin"><NomorSuratKanim /></ProtectedRoute>
+            } />
+            
+            <Route path="/Pegawai" element={
+              <ProtectedRoute requireRole="Super Admin"><Pegawai /></ProtectedRoute>
+            } />
+            
+            <Route path="/surat-editor" element={
+              <ProtectedRoute requireRole="Admin"><SuratEditor /></ProtectedRoute>
+            } />
+            
+            <Route path="/surat-editor/builder/:templateId?" element={
+              <ProtectedRoute requireRole="Admin"><TemplateBuilder /></ProtectedRoute>
+            } />
+
+            <Route path="/surat-editor/tulis/:templateId" element={
+              <ProtectedRoute><SuratWriter /></ProtectedRoute>
+            } />
+
+            {/* Builder 2.0 Routes */}
+            <Route path="/templates-v2" element={
+              <ProtectedRoute requireRole="Admin"><TemplateListV2 /></ProtectedRoute>
+            } />
+            
+            <Route path="/builder-v2" element={
+              <ProtectedRoute requireRole="Admin"><TemplateBuilderV2 /></ProtectedRoute>
+            } />
+            
+            <Route path="/builder-v2/:templateId" element={
+              <ProtectedRoute requireRole="Admin"><TemplateBuilderV2 /></ProtectedRoute>
+            } />
+            
+            <Route path="/writer-v2/:templateId" element={
+              <ProtectedRoute><SuratWriterV2 /></ProtectedRoute>
             } />
           </Routes>
         </main>
       </div>
     </Router>
-  )
+  );
 }
 
-export default App
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
 
-// Trigger redeploy
+export default App;

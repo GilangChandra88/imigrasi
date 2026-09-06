@@ -6,11 +6,12 @@ import {
   FaPlus, FaEdit, FaTrash, FaFileAlt, FaPlay,
   FaSearch, FaClock, FaLayerGroup, FaChevronRight
 } from "react-icons/fa";
+import WorkflowMap from "./WorkflowMap";
 
 const FIELD_TYPE_LABELS = {
-  textarea: "Teks Panjang",
-  textarea_full: "Teks Panjang (Penuh)",
-  text: "Teks Pendek",
+  textarea: "Teks",
+  textarea_full: "Teks (Penuh)",
+  text: "Teks (Lawas)",
   date: "Tanggal",
   list: "Daftar Bernomor",
   list_full: "Daftar Bernomor (Penuh)",
@@ -134,6 +135,7 @@ export default function SuratEditor() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("templates");
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "surat_templates"), (snapshot) => {
@@ -181,23 +183,43 @@ export default function SuratEditor() {
             <FaPlus size={14} />
             Buat Template Baru
           </button>
-        </div>
-
-        {/* Search */}
-        <div className="mt-4 relative max-w-sm">
-          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-          <input
-            type="text"
-            placeholder="Cari template..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-          />
+        </div>        <div className="mt-5 flex items-center justify-between gap-4">
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            <button 
+              onClick={() => setActiveTab('templates')}
+              className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${activeTab === 'templates' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Daftar Template
+            </button>
+            <button 
+              onClick={() => setActiveTab('workflow')}
+              className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${activeTab === 'workflow' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Peta Alur Kerja (Beta)
+            </button>
+          </div>
+          
+          {activeTab === 'templates' && (
+            <div className="relative max-w-sm w-full md:w-auto flex-1">
+              <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+              <input
+                type="text"
+                placeholder="Cari template..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-1.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto bg-slate-50 relative flex flex-col">
+        {activeTab === 'workflow' ? (
+          <WorkflowMap templates={templates} />
+        ) : (
+          <div className="p-6">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-slate-400">
@@ -271,7 +293,11 @@ export default function SuratEditor() {
             </div>
           </>
         )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+

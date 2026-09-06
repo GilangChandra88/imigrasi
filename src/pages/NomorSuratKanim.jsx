@@ -14,8 +14,11 @@ const HIERARCHY = [
   "Kode surat 3"
 ];
 
+import { useLocation } from "react-router-dom";
+
 export default function NomorSuratKanim() {
-  const [activeTab, setActiveTab] = useState('hierarki');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'riwayat');
   const [previewSurat, setPreviewSurat] = useState(null);
   const [nodes, setNodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,14 +55,30 @@ export default function NomorSuratKanim() {
       }
     });
 
-    const unsubHistory = onSnapshot(historyCollection, (snapshot) => {
-      const hist = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // sort by createdAt descending
-      hist.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setSuratHistory(hist);
+    const historyCollection2 = collection(db, "surat_dokumen");
+    
+    let hist1 = [];
+    let hist2 = [];
+    
+    const updateMergedHistory = () => {
+      const merged = [...hist1, ...hist2];
+      merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setSuratHistory(merged);
+    };
+
+    const unsubHistory1 = onSnapshot(historyCollection, (snapshot) => {
+      hist1 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      updateMergedHistory();
     });
 
-    return () => { unsubscribe(); unsubSettings(); unsubHistory(); };
+    const unsubHistory2 = onSnapshot(historyCollection2, (snapshot) => {
+      hist2 = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(doc => doc.nomor); // Only keep documents that have a generated number
+      updateMergedHistory();
+    });
+
+    return () => { unsubscribe(); unsubSettings(); unsubHistory1(); unsubHistory2(); };
   }, []);
 
   const handleSaveLastNumber = async () => {
@@ -169,16 +188,16 @@ export default function NomorSuratKanim() {
       {/* Tabs */}
       <div className="bg-white px-6 border-b border-slate-200 flex gap-6 shrink-0 print:hidden overflow-x-auto">
         <button 
-          onClick={() => setActiveTab('hierarki')}
-          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'hierarki' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          <FaSitemap size={16} /> Hierarki Kode Surat
-        </button>
-        <button 
           onClick={() => setActiveTab('riwayat')}
           className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'riwayat' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
           <FaFileAlt size={16} /> Riwayat Surat Keluar
+        </button>
+        <button 
+          onClick={() => setActiveTab('hierarki')}
+          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'hierarki' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <FaSitemap size={16} /> Hierarki Kode Surat
         </button>
         <button 
           onClick={() => setActiveTab('pengaturan')}
@@ -352,14 +371,16 @@ export default function NomorSuratKanim() {
                         <tr key={s.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                           <td className="p-4 text-slate-800 font-medium whitespace-nowrap">{new Date(s.tanggal).toLocaleDateString('id-ID')}</td>
                           <td className="p-4 text-indigo-700 font-mono font-bold text-sm bg-indigo-50/30 whitespace-nowrap">{s.nomor}</td>
-                          <td className="p-4 text-slate-600 text-sm max-w-[400px] truncate" title={s.untuk?.[0]}>{s.untuk?.[0] || '-'}</td>
+                          <td className="p-4 text-slate-600 text-sm max-w-[400px] truncate" title={s.templateNama || s.untuk?.[0]}>
+                            {s.templateNama || s.untuk?.[0] || '-'}
+                          </td>
                           <td className="p-4 text-slate-600 text-sm">
                             {s.kepada && s.kepada.length > 0 ? (
                               <div className="flex flex-col">
                                 <span className="font-bold text-slate-700 whitespace-nowrap truncate">{s.kepada[0].nama}</span>
                                 {s.kepada.length > 1 && <span className="text-xs text-indigo-500 mt-0.5">+{s.kepada.length - 1} pegawai lainnya</span>}
                               </div>
-                            ) : '-'}
+                            ) : (s.templateId ? <span className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2 py-1 rounded">Template Bebas</span> : '-')}
                           </td>
                           <td className="p-4 text-slate-500 text-xs text-right whitespace-nowrap">{new Date(s.createdAt).toLocaleString('id-ID')}</td>
                           <td className="p-4 text-center">
@@ -406,7 +427,7 @@ export default function NomorSuratKanim() {
               <div className="bg-white mx-auto shadow-sm print:shadow-none min-h-[1056px] w-[816px] print:w-full text-black pl-[3cm] pr-[2cm] py-[2cm] print:p-0" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '16px' }}>
                   {/* Header / KOP Placeholder */}
                   <div className="border-b-[4px] border-black pb-2 mb-8 flex items-center text-center relative" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
-                    <div className="w-[90px] h-[90px] shrink-0 bg-slate-100 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 text-xs font-sans print:border-black print:text-black">Logo</div>
+                    <img src="/logo-imigrasi.png" alt="Logo Imigrasi" className="w-[90px] h-[90px] shrink-0 object-contain" />
                     <div className="flex-1 ml-4 pr-10">
                       <h3 className="leading-tight uppercase text-[13px]">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</h3>
                       <h3 className="leading-tight uppercase text-[13px]">DIREKTORAT JENDERAL IMIGRASI</h3>
@@ -418,78 +439,153 @@ export default function NomorSuratKanim() {
                   </div>
 
                   {/* Judul Surat */}
+                  {/* Judul Surat */}
                   <div className="text-center mb-8">
-                    <h2 className="font-bold text-[17px] uppercase tracking-wider">SURAT PERINTAH</h2>
+                    <h2 className="font-bold text-[17px] uppercase tracking-wider">{previewSurat.templateId ? previewSurat.templateNama : "SURAT PERINTAH"}</h2>
                     <div className="flex justify-center items-center mt-0.5">
-                      <span className="font-bold mr-2 text-[14px]">NOMOR :</span>
-                      <div className="font-bold text-[14px] bg-transparent text-center px-2 py-0.5 min-w-[250px] rounded">
+                      <span className="font-bold mr-1 text-[14px]">NOMOR :</span>
+                      <span className="font-bold text-[14px]">
                         {previewSurat.nomor}
-                      </div>
+                      </span>
                     </div>
                   </div>
 
                   {/* Isi Surat */}
                   <div className="flex-1 flex flex-col gap-3 text-justify text-[15px] leading-snug">
-                    
-                    <div className="grid grid-cols-[110px_1fr] gap-2">
-                      <div className="pt-1">Menimbang</div>
-                      <div className="flex items-start w-full">
-                        <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
-                        <div className="flex-1 w-full leading-relaxed py-1">
-                          {previewSurat.menimbang}
-                        </div>
-                      </div>
+                    {previewSurat.templateId ? (
+                      <div className="flex flex-col gap-3">
+                        {Object.entries(previewSurat.fields || {}).map(([key, value]) => {
+                          if (value === null || value === undefined || value === "") return null;
+                          if (Array.isArray(value) && value.length === 0) return null;
+                          if (key.startsWith("separator")) {
+                            return (
+                              <div key={key} className="text-center font-bold tracking-widest my-4 text-[15px]">
+                                {value}
+                              </div>
+                            );
+                          }
 
-                      <div className="pt-1">Dasar</div>
-                      <div className="flex items-start">
-                        <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
-                        <div className="flex-1 flex flex-col gap-1 w-full">
-                          {(Array.isArray(previewSurat.dasar) ? previewSurat.dasar : [previewSurat.dasar]).map((item, index) => (
-                            <div key={index} className="flex items-start">
-                              <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
-                              <div className="flex-1 w-full leading-relaxed py-1">
-                                {item}
+                          let renderedValue;
+                          if (Array.isArray(value)) {
+                            if (typeof value[0] === 'object') {
+                              renderedValue = (
+                                <div className="flex flex-col gap-4">
+                                  {value.map((p, idx) => (
+                                    <div key={idx} className="flex items-start w-full">
+                                      <span className="w-[25px] shrink-0 pt-1">{idx + 1}.</span>
+                                      <div className="flex-1 grid grid-cols-[110px_15px_1fr] gap-y-1 text-[15px] w-full">
+                                        <span>Nama</span><span>:</span><span className="font-semibold">{p.nama}</span>
+                                        <span>NIP</span><span>:</span><span>{p.nip}</span>
+                                        <span>Pangkat/Gol.</span><span>:</span><span>{p.pangkat}</span>
+                                        <span>Jabatan</span><span>:</span><span>{p.jabatan}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            } else {
+                              renderedValue = (
+                                <div className="flex flex-col gap-1 w-full">
+                                  {value.map((str, idx) => (
+                                    <div key={idx} className="flex items-start w-full">
+                                      <span className="w-[25px] shrink-0 pt-1">{idx + 1}.</span>
+                                      <div className="flex-1 w-full leading-relaxed py-1 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: str || "" }} />
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            }
+                          } else if (typeof value === 'object') {
+                            renderedValue = (
+                              <div className="grid grid-cols-[110px_15px_1fr] gap-y-1 text-[15px]">
+                                <span>Nama</span><span>:</span><span className="font-semibold">{value.nama}</span>
+                                <span>NIP</span><span>:</span><span>{value.nip}</span>
+                                <span>Pangkat/Gol.</span><span>:</span><span>{value.pangkat}</span>
+                                <span>Jabatan</span><span>:</span><span>{value.jabatan}</span>
+                              </div>
+                            );
+                          } else {
+                            renderedValue = <div className="leading-relaxed py-1 whitespace-pre-wrap w-full" dangerouslySetInnerHTML={{ __html: value || "" }} />;
+                          }
+
+                          return (
+                            <div key={key} className="grid grid-cols-[110px_1fr] gap-2">
+                              <div className="pt-1 uppercase">{key.replace(/_/g, " ")}</div>
+                              <div className="flex items-start w-full">
+                                <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                                <div className="flex-1 w-full">
+                                  {renderedValue}
+                                </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
-                    </div>
-
-                    <div className="text-center font-bold tracking-widest my-4 text-[15px]">M E N U G A S K A N :</div>
-
-                    <div className="grid grid-cols-[110px_1fr] gap-2">
-                      <div className="pt-1">Kepada</div>
-                      <div className="flex flex-col gap-4 p-1 print:p-0">
-                        {previewSurat.kepada?.map((p, idx) => (
-                          <div key={p.id || idx} className="flex">
-                            <span className="w-[20px] shrink-0 text-center">:</span>
-                            <span className="w-[25px] shrink-0">{idx + 1}</span>
-                            <div className="flex-1 grid grid-cols-[110px_15px_1fr] gap-y-1">
-                              <span>Nama</span><span>:</span><span>{p.nama}</span>
-                              <span>NIP</span><span>:</span><span>{p.nip}</span>
-                              <span>Pangkat / Gol.</span><span>:</span><span>{p.pangkat}</span>
-                              <span>Jabatan</span><span>:</span><span>{p.jabatan}</span>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-[110px_1fr] gap-2">
+                          <div className="pt-1">Menimbang</div>
+                          <div className="flex items-start w-full">
+                            <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                            <div className="flex-1 w-full leading-relaxed py-1">
+                              {previewSurat.menimbang}
                             </div>
                           </div>
-                        ))}
-                      </div>
 
-                      <div className="pt-1">Untuk</div>
-                      <div className="flex items-start">
-                        <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
-                        <div className="flex-1 flex flex-col gap-1 w-full">
-                          {(Array.isArray(previewSurat.untuk) ? previewSurat.untuk : [previewSurat.untuk]).map((item, index) => (
-                            <div key={index} className="flex items-start">
-                              <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
-                              <div className="flex-1 w-full leading-relaxed py-1">
-                                {item}
-                              </div>
+                          <div className="pt-1">Dasar</div>
+                          <div className="flex items-start">
+                            <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                            <div className="flex-1 flex flex-col gap-1 w-full">
+                              {(Array.isArray(previewSurat.dasar) ? previewSurat.dasar : [previewSurat.dasar]).map((item, index) => (
+                                <div key={index} className="flex items-start">
+                                  <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
+                                  <div className="flex-1 w-full leading-relaxed py-1">
+                                    {item}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      </div>
-                    </div>
+
+                        <div className="text-center font-bold tracking-widest my-4 text-[15px]">M E N U G A S K A N :</div>
+
+                        <div className="grid grid-cols-[110px_1fr] gap-2">
+                          <div className="pt-1">Kepada</div>
+                          <div className="flex items-start w-full">
+                            <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                            <div className="flex-1 w-full flex flex-col gap-4">
+                              {(Array.isArray(previewSurat.kepada) ? previewSurat.kepada : []).map((pegawai, index) => (
+                                <div key={index} className="flex items-start w-full">
+                                  <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
+                                  <div className="flex-1 grid grid-cols-[110px_15px_1fr] gap-y-1 text-[15px] w-full">
+                                    <span>Nama</span><span>:</span><span className="font-semibold">{pegawai.nama}</span>
+                                    <span>NIP</span><span>:</span><span>{pegawai.nip}</span>
+                                    <span>Pangkat/Gol.</span><span>:</span><span>{pegawai.pangkat}</span>
+                                    <span>Jabatan</span><span>:</span><span>{pegawai.jabatan}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="pt-1">Untuk</div>
+                          <div className="flex items-start w-full">
+                            <span className="w-[20px] shrink-0 pt-1 text-center">:</span>
+                            <div className="flex-1 w-full flex flex-col gap-1">
+                              {(Array.isArray(previewSurat.untuk) ? previewSurat.untuk : [previewSurat.untuk]).map((item, index) => (
+                                <div key={index} className="flex items-start w-full">
+                                  <span className="w-[25px] shrink-0 pt-1">{index + 1}.</span>
+                                  <div className="flex-1 w-full leading-relaxed py-1">
+                                    {item}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Footer */}

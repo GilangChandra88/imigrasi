@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import {
@@ -31,7 +32,11 @@ const getInitialValue = (field) => {
     case "list": return [""];
     case "list_full": return [""];
     case "pegawai_multi": return [];
-    case "pegawai_single": return null;
+    case "row_pegawai_nama":
+      case "row_pegawai_nip":
+      case "row_pegawai_nama":
+      case "row_pegawai_nip":
+      case "pegawai_single": return null;
     case "pegawai_detail": return null;
     case "date": return new Date().toISOString().split("T")[0];
     case "separator": return null;
@@ -42,6 +47,18 @@ const getInitialValue = (field) => {
 const isFieldValid = (field, value) => {
   if (field.type === "separator") return true; // separators are always valid
   if (!field.required) return true;
+  if (field.type === "row_multi") {
+    return Array.isArray(value) && value.some(v => typeof v === 'string' && v.trim() !== "");
+  }
+  if (field.type === "row_pengikut") {
+      return Array.isArray(value) && value.length > 0 && value.every(row => Array.isArray(row));
+    }
+    if (field.type === "table") {
+      return Array.isArray(value) && value.length > 0 && value.every(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ""));
+    }
+    if (field.type === "row_pegawai_nama" || field.type === "row_pegawai_nip") {
+      return value !== null && typeof value === "object";
+    }
   switch (field.type) {
     case "list":
     case "list_full":
@@ -170,7 +187,7 @@ function FieldFormView({ field, value, onChange, activeField, setActiveField, op
     );
   }
 
-  if (field.type === "pegawai_single" || field.type === "pegawai_detail") {
+  if (field.type === "row_pegawai_nama" || field.type === "row_pegawai_nip" || field.type === "pegawai_single" || field.type === "pegawai_detail") {
     return (
       <div className="flex flex-col gap-2">
         <label className="text-sm font-bold text-slate-600">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label>
@@ -665,7 +682,7 @@ export default function SuratWriter() {
 
   // Active field info
   const activeFieldDef = template.fields?.find((f) => f.name === activeField);
-  const isPegawaiField = activeFieldDef?.type === "pegawai_single" || activeFieldDef?.type === "pegawai_detail" || activeFieldDef?.type === "pegawai_multi" || activeField === "__penandatangan__";
+  const isPegawaiField = activeFieldDef?.type === "row_pegawai_nama" || activeFieldDef?.type === "row_pegawai_nip" || activeFieldDef?.type === "pegawai_single" || activeFieldDef?.type === "pegawai_detail" || activeFieldDef?.type === "pegawai_multi" || activeField === "__penandatangan__";
   const activeSugesti = sugestiList.filter((s) => s.kategori === activeField);
 
   const filteredPegawai = pegawaiList.filter(
@@ -690,7 +707,7 @@ export default function SuratWriter() {
       return;
     }
 
-    if (activeFieldDef.type === "pegawai_single" || activeFieldDef.type === "pegawai_detail") {
+    if (activeFieldDef.type === "row_pegawai_nama" || activeFieldDef.type === "row_pegawai_nip" || activeFieldDef.type === "pegawai_single" || activeFieldDef.type === "pegawai_detail") {
       updateField(activeField, pegawai);
     } else if (activeFieldDef.type === "pegawai_multi") {
       const current = Array.isArray(docData[activeField]) ? docData[activeField] : [];
@@ -706,7 +723,7 @@ export default function SuratWriter() {
   const isPegawaiSelected = (pegawai) => {
     if (activeField === "__penandatangan__") return penandatangan?.id === pegawai.id;
     if (!activeFieldDef) return false;
-    if (activeFieldDef.type === "pegawai_single" || activeFieldDef.type === "pegawai_detail") return docData[activeField]?.id === pegawai.id;
+    if (activeFieldDef.type === "row_pegawai_nama" || activeFieldDef.type === "row_pegawai_nip" || activeFieldDef.type === "pegawai_single" || activeFieldDef.type === "pegawai_detail") return docData[activeField]?.id === pegawai.id;
     if (activeFieldDef.type === "pegawai_multi") {
       const current = Array.isArray(docData[activeField]) ? docData[activeField] : [];
       return !!current.find((k) => k.id === pegawai.id);

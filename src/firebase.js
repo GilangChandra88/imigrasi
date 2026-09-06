@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA8k9rhWPu8_2RDwUeACnniC1Tkk60K5D0",
@@ -12,7 +13,14 @@ const firebaseConfig = {
   measurementId: "G-ZXFMJMD6MX"
 };
 
+// Primary App for normal usage
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 export const db = getFirestore(app, "imigrasi");
+
+// Secondary App for creating users without logging out the primary user
+export const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+export const secondaryAuth = getAuth(secondaryApp);
+
 console.log("Firebase DB Initialized with ID:", db.type === 'firestore' ? db._databaseId?.database : "unknown", "or", "imigrasi");
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;

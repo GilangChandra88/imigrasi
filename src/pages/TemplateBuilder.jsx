@@ -9,8 +9,12 @@ import {
   FaSave, FaChevronLeft, FaCheck, FaEye, FaAlignLeft,
   FaFont, FaCalendar, FaList, FaUser, FaUsers, FaToggleOn,
   FaToggleOff, FaGripVertical, FaMinus, FaAlignJustify,
-  FaListOl, FaIdCard, FaPencilAlt
+  FaListOl, FaIdCard, FaPencilAlt, FaTable
 } from "react-icons/fa";
+
+// ============================================================
+// FIELD TYPE DEFINITIONS
+// ============================================================
 
 // ============================================================
 // FIELD TYPE DEFINITIONS
@@ -179,8 +183,40 @@ const FIELD_TYPES = [
       </div>
     ),
   },
-  {
-    type: "separator",
+  
+    {
+      type: "table_group",
+      label: "Tabel Terstruktur (Grup)",
+      description: "Sebuah kontainer tabel yang dapat membungkus field-field lain menjadi baris tabel.",
+      icon: FaTable,
+      color: "purple",
+      preview: (label, def) => (
+        <div className="text-center italic text-slate-400 py-4 border-2 border-dashed border-purple-200 bg-purple-50 rounded">
+          -- Preview Sub-Field Tabel --
+        </div>
+      ),
+    },
+    {
+      type: "table",
+      label: "Tabel Data Dinamis",
+      description: "Tabel dengan tombol Tambah Baris. (Pisahkan nama kolom dengan koma pada Nilai Awal)",
+      icon: FaTable,
+      color: "cyan",
+      preview: (label, def) => {
+        const cols = def ? def.split(',').map(c => c.trim()) : ["Kolom 1", "Kolom 2"];
+        return (
+          <div className="flex flex-col gap-2 text-[14px] w-full">
+            <div className="text-slate-700 italic hidden">{label}</div>
+            <table className="w-full border-collapse border border-dashed border-cyan-300 text-[11px] text-cyan-700 bg-cyan-50/50">
+              <thead><tr>{cols.map((c,i)=><th key={i} className="border-b border-cyan-300 pb-1 px-1 text-left">{c}</th>)}</tr></thead>
+              <tbody><tr>{cols.map((_,i)=><td key={i} className="pt-1 px-1"><div className="h-3 bg-cyan-100 rounded w-full"/></td>)}</tr></tbody>
+            </table>
+          </div>
+        );
+      },
+    },
+    {
+      type: "separator",
     label: "Separator / Pemisah",
     description: "Teks pemisah di tengah dokumen, bisa ditempatkan di mana saja",
     icon: FaMinus,
@@ -194,6 +230,8 @@ const FIELD_TYPES = [
 ];
 
 const COLOR_CLASSES = {
+  purple: { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-300", light: "bg-purple-50", ring: "ring-purple-400" },
+  cyan: { bg: "bg-cyan-100", text: "text-cyan-700", border: "border-cyan-300", light: "bg-cyan-50", ring: "ring-cyan-400" },
   violet: { bg: "bg-violet-100", text: "text-violet-700", border: "border-violet-300", light: "bg-violet-50", ring: "ring-violet-400" },
   fuchsia: { bg: "bg-fuchsia-100", text: "text-fuchsia-700", border: "border-fuchsia-300", light: "bg-fuchsia-50", ring: "ring-fuchsia-400" },
   sky: { bg: "bg-sky-100", text: "text-sky-700", border: "border-sky-300", light: "bg-sky-50", ring: "ring-sky-400" },
@@ -207,6 +245,59 @@ const COLOR_CLASSES = {
 };
 
 
+
+// ============================================================
+// TABLE ROW TYPE DEFINITIONS (Khusus untuk dalam table_group)
+// ============================================================
+const TABLE_ROW_TYPES = [
+
+  {
+    type: "row_standard",
+    label: "Baris Standar",
+    description: "Kolom kiri label, kolom kanan 1 input teks",
+    icon: FaAlignLeft,
+    color: "sky",
+    preview: (label) => <div className="text-[12px] italic text-slate-400">Preview Baris Standar</div>
+  },
+  {
+    type: "row_multi",
+    label: "Baris Beranak (a, b, c)",
+    description: "Kolom kiri dan kanan terbagi menjadi beberapa poin (pisahkan dengan koma/enter pada label)",
+    icon: FaListOl,
+    color: "emerald",
+    preview: (label) => <div className="text-[12px] italic text-slate-400">Preview Baris Beranak</div>
+  },
+  {
+    type: "row_pengikut",
+    label: "Tabel Pengikut",
+    description: "Format baris khusus untuk Pengikut (Tabel di dalam tabel)",
+    icon: FaUsers,
+    color: "rose",
+    preview: (label) => <div className="text-[12px] italic text-slate-400">Preview Baris Pengikut</div>
+  }
+,
+  {
+    type: "row_pegawai_nama",
+    label: "Pilih Pegawai (Hanya Nama)",
+    description: "Kolom kanan menampilkan Nama Pegawai (bisa ditambah Teks Default di atasnya)",
+    icon: FaUser,
+    color: "blue",
+    preview: (label) => <div className="text-[12px] italic text-slate-400">Preview Pegawai</div>
+  },
+  {
+    type: "row_pegawai_nip",
+    label: "Pilih Pegawai (Nama & NIP)",
+    description: "Kolom kanan menampilkan Nama Pegawai (Tebal) dan NIP di bawahnya",
+    icon: FaIdCard,
+    color: "indigo",
+    preview: (label) => <div className="text-[12px] italic text-slate-400">Preview Pegawai + NIP</div>
+  }
+];
+
+function getTableRowTypeInfo(type) {
+  return TABLE_ROW_TYPES.find((t) => t.type === type) || TABLE_ROW_TYPES[0];
+}
+
 function getTypeInfo(type) {
   return FIELD_TYPES.find((t) => t.type === type) || FIELD_TYPES[0];
 }
@@ -214,9 +305,9 @@ function getTypeInfo(type) {
 // ============================================================
 // FIELD PICKER MODAL
 // ============================================================
-function FieldPickerModal({ onClose, onSelect, editingField }) {
+function FieldPickerModal({ onClose, onSelect, editingField, isSubField }) {
   const [step, setStep] = useState(editingField ? "config" : "type"); // 'type' | 'config'
-  const [selectedType, setSelectedType] = useState(editingField ? getTypeInfo(editingField.type) : null);
+  const [selectedType, setSelectedType] = useState(editingField ? (isSubField ? getTableRowTypeInfo(editingField.type) : getTypeInfo(editingField.type)) : null);
   const [label, setLabel] = useState(editingField ? editingField.label : "");
   const [required, setRequired] = useState(editingField ? editingField.required : true);
   const [defaultValue, setDefaultValue] = useState(editingField ? (editingField.defaultValue || "") : "");
@@ -231,22 +322,27 @@ function FieldPickerModal({ onClose, onSelect, editingField }) {
     setStep("config");
   };
 
-  const handleConfirm = () => {
-    if (!label.trim()) return;
-    const isSeparator = selectedType.type === "separator";
-    const generatedName = label.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const name = isSeparator ? `separator_${Date.now()}` : generatedName;
-    
-    onSelect({
-      id: editingField ? editingField.id : `f_${Date.now()}`,
-      type: selectedType.type,
-      label: label.trim(),
-      name: editingField ? editingField.name : (name || selectedType.type),
-      required: isSeparator ? false : required,
-      defaultValue: defaultValue.trim(),
-    });
-    onClose();
-  };
+  const [options, setOptions] = useState(editingField?.options || ["Opsi 1", "Opsi 2"]);
+
+    const handleConfirm = () => {
+      const isMulti = selectedType.type === "row_multi";
+      if (!isMulti && !label.trim()) return;
+      
+      const isSeparator = selectedType.type === "separator";
+      const generatedName = label.trim() ? label.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") : `multi_${Date.now()}`;
+      const name = isSeparator ? `separator_${Date.now()}` : generatedName;
+      
+      onSelect({
+        id: editingField ? editingField.id : `f_${Date.now()}`,
+        type: selectedType.type,
+        label: label.trim(),
+        name: editingField ? editingField.name : (name || selectedType.type),
+        required: isSeparator ? false : required,
+        defaultValue: defaultValue.trim(),
+        ...(isMulti && { options: options.map(o => o.trim()).filter(Boolean) })
+      });
+      onClose();
+    };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -279,7 +375,7 @@ function FieldPickerModal({ onClose, onSelect, editingField }) {
               Pilih berdasarkan tampilan hasil di dokumen yang Anda inginkan
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {FIELD_TYPES.map((ft) => {
+              {(isSubField ? TABLE_ROW_TYPES : FIELD_TYPES).map((ft) => {
                 const c = COLOR_CLASSES[ft.color];
                 const Icon = ft.icon;
                 return (
@@ -340,30 +436,62 @@ function FieldPickerModal({ onClose, onSelect, editingField }) {
               </button>
             </div>
 
-            {/* Label input */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-slate-700">
-                {selectedType.type === "separator" ? "Teks Separator" : "Label Field"}
-                {selectedType.type !== "separator" && <span className="text-rose-500"> *</span>}
-              </label>
-              <input
-                type="text"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder={selectedType.type === "separator" ? "Contoh: M E N U G A S K A N :" : "Contoh: Menimbang, Dasar, Kepada..."}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
-                autoFocus
-                onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
-              />
-              <p className="text-xs text-slate-400">
-                {selectedType.type === "separator"
-                  ? "Teks yang muncul di tengah dokumen (bisa dikosongkan untuk garis pemisah biasa)."
-                  : "Nama field yang tampil di formulir dan dokumen."}
-              </p>
-            </div>
+            {/* Label & Options Input */}
+              {selectedType.type === "row_multi" ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-slate-700">Judul Baris (Opsional)</label>
+                    <input
+                      type="text"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      placeholder="Contoh: Pembebanan Anggaran"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-slate-700">Opsi Beranak (a, b, c)</label>
+                    {options.map((opt, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <span className="w-6 text-sm font-bold text-slate-400">{String.fromCharCode(97 + idx)}.</span>
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => { const newOpts = [...options]; newOpts[idx] = e.target.value; setOptions(newOpts); }}
+                          placeholder="Nama opsi..."
+                          className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                        />
+                        <button type="button" onClick={() => setOptions(options.filter((_, i) => i !== idx))} className="text-rose-400 hover:text-rose-600 p-2"><FaTrash size={12}/></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setOptions([...options, ""])} className="mt-1 text-sm font-bold text-indigo-600 hover:text-indigo-800 flex gap-2 items-center"><FaPlus size={12}/> Tambah Opsi</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-slate-700">
+                    {selectedType.type === "separator" ? "Teks Separator" : "Label Field"}
+                    {selectedType.type !== "separator" && <span className="text-rose-500"> *</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder={selectedType.type === "separator" ? "Contoh: M E N U G A S K A N :" : "Contoh: Menimbang, Dasar, Kepada..."}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
+                  />
+                  <p className="text-xs text-slate-400">
+                    {selectedType.type === "separator"
+                      ? "Teks yang muncul di tengah dokumen."
+                      : "Nama field yang tampil di formulir dan dokumen."}
+                  </p>
+                </div>
+              )}
 
             {/* Default Value Input */}
-            {selectedType.type !== "separator" && !selectedType.type.startsWith("pegawai") && !selectedType.type.startsWith("list") && (
+            {selectedType.type !== "separator" && !selectedType.type.startsWith("pegawai_") && !selectedType.type.startsWith("list") && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-slate-700">
                   Nilai Awal (Default Value)
@@ -421,7 +549,7 @@ function FieldPickerModal({ onClose, onSelect, editingField }) {
               </button>
               <button
                 onClick={handleConfirm}
-                disabled={!label.trim()}
+                disabled={selectedType.type !== "row_multi" && !label.trim()}
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition-colors flex items-center gap-2"
               >
                 <FaCheck size={12} /> Tambahkan Field
@@ -494,12 +622,88 @@ function LivePreview({ template }) {
         ) : (
           fields.map((f) => {
             if (f.type === "separator") {
-              return (
-                <div key={f.id} className="text-center font-bold tracking-widest my-2 text-[12px] text-slate-700">
-                  {f.label || "— SEPARATOR —"}
-                </div>
-              );
-            }
+                return (
+                  <div key={f.id} className="text-center font-bold tracking-widest my-2 text-[12px] text-slate-700">
+                    {f.label || "— SEPARATOR —"}
+                  </div>
+                );
+              }
+              if (f.type === "table_group") {
+                const subs = f.subFields || [];
+                return (
+                  <div key={f.id} className="my-2">
+                    <table className="w-full border-collapse border border-slate-800 text-[11px] leading-snug">
+                      <tbody>
+                        {subs.length === 0 ? (
+                          <tr><td className="border border-slate-800 p-2 text-center text-slate-400 italic">Tabel belum diisi baris</td></tr>
+                        ) : (
+                          subs.map((sub, i) => {
+                            if (sub.type === "row_pengikut") {
+                              return (
+                                <tr key={sub.id} className="align-top">
+                                  <td className="border border-slate-800 p-1.5 w-6 text-center">{i + 1}</td>
+                                  <td className="border border-slate-800 p-1.5 w-40 font-semibold align-top" rowSpan={2}>{sub.label}</td>
+                                  <td className="border border-slate-800 p-1.5 font-semibold text-center w-1/2">Tanggal Lahir</td>
+                                  <td className="border border-slate-800 p-1.5 font-semibold text-center w-1/2">Keterangan</td>
+                                </tr>
+                              );
+                            }
+                            if (sub.type === "row_multi") {
+                              const opts = sub.options || [];
+                              return (
+                                <tr key={sub.id} className="align-top">
+                                  <td className="border border-slate-800 p-1.5 w-6 text-center">{i + 1}</td>
+                                  <td className="border border-slate-800 p-1.5 w-40 font-semibold">
+                                    <div className="whitespace-pre-wrap">{sub.label}</div>
+                                    {opts.map((opt, oIdx) => (
+                                      <div key={oIdx} className="font-normal">{String.fromCharCode(97 + oIdx)}. {opt}</div>
+                                    ))}
+                                  </td>
+                                  <td colSpan={2} className="border border-slate-800 p-1.5">
+                                    {sub.label && <div className="min-h-[1.4rem]"></div>}
+                                    <div className="flex flex-col gap-1">
+                                      {opts.map((opt, oIdx) => {
+                                        const prefix = String.fromCharCode(97 + oIdx) + ".";
+                                        return (
+                                          <div key={oIdx} className="flex gap-1 text-slate-400">
+                                            <span className="w-4 shrink-0">{prefix}</span><span className="flex-1 border-b border-dashed border-slate-300 mt-3"></span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            }
+                            if (sub.type === "row_pegawai_nama" || sub.type === "row_pegawai_nip") {
+                              return (
+                                <tr key={sub.id} className="align-top">
+                                  <td className="border border-slate-800 p-1.5 w-6 text-center">{i + 1}</td>
+                                  <td className="border border-slate-800 p-1.5 w-40 font-semibold">{sub.label}</td>
+                                  <td colSpan={2} className="border border-slate-800 p-1.5 text-slate-400 italic">
+                                    {sub.defaultValue && <div className="whitespace-pre-wrap not-italic text-slate-800">{sub.defaultValue}</div>}
+                                    Pilih Pegawai...
+                                  </td>
+                                </tr>
+                              );
+                            }
+                            // row_standard
+                            return (
+                              <tr key={sub.id} className="align-top">
+                                <td className="border border-slate-800 p-1.5 w-6 text-center">{i + 1}</td>
+                                <td className="border border-slate-800 p-1.5 w-40 font-semibold">{sub.label}</td>
+                                <td colSpan={2} className="border border-slate-800 p-1.5">
+                                  <div className="w-full h-5 bg-slate-100 rounded border border-dashed border-slate-300"></div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
             const ft = getTypeInfo(f.type);
             return <div key={f.id}>{ft.preview(f.label, f.defaultValue)}</div>;
           })
@@ -528,102 +732,96 @@ function LivePreview({ template }) {
 // ============================================================
 // FIELD ITEM in config panel
 // ============================================================
-function FieldItem({ field, index, total, onMoveUp, onMoveDown, onRemove, onEdit }) {
-  const ft = getTypeInfo(field.type);
-  const c = COLOR_CLASSES[ft.color] || COLOR_CLASSES.indigo;
-  const Icon = ft.icon;
-
-  // Separator gets a special full-width look
-  if (field.type === "separator") {
-    return (
-      <div className="flex items-center gap-2 bg-slate-100 border border-dashed border-slate-300 rounded-xl p-2 group hover:border-slate-400 transition-all">
-        <div className="text-slate-300 cursor-grab shrink-0">
-          <FaGripVertical size={14} />
-        </div>
-        <div className="flex-1 flex items-center gap-2 min-w-0">
-          <div className="p-1.5 rounded-lg bg-slate-200 shrink-0">
-            <FaMinus size={11} className="text-slate-500" />
+function FieldItem({ field, index, total, onMoveUp, onMoveDown, onRemove, onEdit, onAddSubField, onMoveToTable, allGroups, isSub = false, parentId = null }) {
+    const ft = isSub ? getTableRowTypeInfo(field.type) : getTypeInfo(field.type);
+    const c = COLOR_CLASSES[ft.color] || COLOR_CLASSES.indigo;
+    const Icon = ft.icon || FaFileAlt;
+  
+    if (field.type === "separator") {
+      return (
+        <div className="flex items-center gap-2 bg-slate-100 border border-dashed border-slate-300 rounded-xl p-2 group hover:border-slate-400 transition-all">
+          <div className="text-slate-300 cursor-grab shrink-0"><FaGripVertical size={14} /></div>
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="p-1.5 rounded-lg bg-slate-200 shrink-0"><FaMinus size={11} className="text-slate-500" /></div>
+            <p className="font-bold text-sm text-slate-600 tracking-wider truncate flex-1">{field.label || "— SEPARATOR —"}</p>
           </div>
-          <p className="font-bold text-sm text-slate-600 tracking-wider truncate flex-1">
-            {field.label || "— SEPARATOR —"}
-          </p>
-          <span className="text-[9px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded-full shrink-0">
-            Pemisah
-          </span>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><FaPencilAlt size={11} /></button>
+            <button onClick={onMoveUp} disabled={index === 0} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><FaArrowUp size={11} /></button>
+            <button onClick={onMoveDown} disabled={index === total - 1} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><FaArrowDown size={11} /></button>
+            <button onClick={onRemove} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={11} /></button>
+          </div>
+        </div>
+      );
+    }
+
+    if (field.type === "table_group") {
+      const subs = field.subFields || [];
+      return (
+        <div className="flex flex-col gap-2 bg-purple-50/30 border-2 border-purple-200 rounded-xl p-3 shadow-sm group hover:border-purple-300 transition-all mb-3">
+          <div className="flex items-center gap-2">
+            <div className="text-slate-300 cursor-grab shrink-0"><FaGripVertical size={14} /></div>
+            <div className="p-1.5 rounded-lg shrink-0 bg-purple-100"><Icon size={12} className="text-purple-600" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm text-slate-700 truncate">{field.label}</p>
+              <p className="text-[10px] font-semibold text-purple-600">{ft.label} • {subs.length} item</p>
+            </div>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => onEdit(field.id)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><FaPencilAlt size={11} /></button>
+              <button onClick={() => onMoveUp(index)} disabled={index === 0} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><FaArrowUp size={11} /></button>
+              <button onClick={() => onMoveDown(index)} disabled={index === total - 1} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><FaArrowDown size={11} /></button>
+              <button onClick={() => onRemove(field.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={11} /></button>
+            </div>
+          </div>
+          <div className="pl-6 pr-2 pt-2 pb-1 border-t border-purple-100 mt-2 flex flex-col gap-2">
+            {subs.length === 0 ? (
+              <div className="text-xs text-slate-400 italic text-center py-2">Tabel masih kosong</div>
+            ) : (
+              subs.map((sub, i) => (
+                <FieldItem 
+                  key={sub.id} field={sub} index={i} total={subs.length}
+                  onMoveUp={() => onMoveUp(i, true, field.id)}
+                  onMoveDown={() => onMoveDown(i, true, field.id)}
+                  onRemove={() => onRemove(sub.id, field.id)}
+                  onEdit={() => onEdit(sub.id, field.id)}
+                  isSub={true} parentId={field.id}
+                />
+              ))
+            )}
+            <button
+              onClick={() => onAddSubField(field.id)}
+              className="mt-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-dashed border-purple-300 text-purple-600 hover:bg-purple-100 text-xs font-bold transition-colors w-full"
+            >
+              <FaPlus size={10} /> Tambah Field ke Tabel
+            </button>
+          </div>
+        </div>
+      );
+    }
+  
+    return (
+      <div className={`flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-3 shadow-sm group hover:border-indigo-200 transition-all ${isSub ? 'scale-[0.98] -mx-1' : ''}`}>
+        <div className="text-slate-300 cursor-grab shrink-0"><FaGripVertical size={14} /></div>
+        <div className={`p-1.5 rounded-lg shrink-0 ${c.bg}`}><Icon size={12} className={c.text} /></div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm text-slate-700 truncate">{field.label}</p>
+          <div className="flex items-center gap-1">
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${c.bg} ${c.text}`}>{ft.label}</span>
+            {field.required && <span className="text-[10px] font-bold text-rose-500">*</span>}
+          </div>
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-            <FaPencilAlt size={11} />
-          </button>
-          <button onClick={onMoveUp} disabled={index === 0}
-            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-            <FaArrowUp size={11} />
-          </button>
-          <button onClick={onMoveDown} disabled={index === total - 1}
-            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-            <FaArrowDown size={11} />
-          </button>
-          <button onClick={onRemove}
-            className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
-            <FaTrash size={11} />
-          </button>
+          
+          <button onClick={() => isSub ? onEdit(field.id, parentId) : onEdit(field.id)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><FaPencilAlt size={11} /></button>
+          <button onClick={() => isSub ? onMoveUp(index, true, parentId) : onMoveUp(index)} disabled={index === 0} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><FaArrowUp size={11} /></button>
+          <button onClick={() => isSub ? onMoveDown(index, true, parentId) : onMoveDown(index)} disabled={index === total - 1} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><FaArrowDown size={11} /></button>
+          <button onClick={() => isSub ? onRemove(field.id, parentId) : onRemove(field.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={11} /></button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-3 shadow-sm group hover:border-indigo-200 transition-all">
-      <div className="text-slate-300 cursor-grab shrink-0">
-        <FaGripVertical size={14} />
-      </div>
-      <div className={`p-1.5 rounded-lg shrink-0 ${c.bg}`}>
-        <Icon size={12} className={c.text} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm text-slate-800 truncate">{field.label}</p>
-        <p className={`text-[10px] font-semibold ${c.text}`}>{ft.label}</p>
-      </div>
-      {field.required && (
-        <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-full shrink-0">
-          Wajib
-        </span>
-      )}
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={onEdit}
-          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-        >
-          <FaPencilAlt size={11} />
-        </button>
-        <button
-          onClick={onMoveUp}
-          disabled={index === 0}
-          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <FaArrowUp size={11} />
-        </button>
-        <button
-          onClick={onMoveDown}
-          disabled={index === total - 1}
-          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <FaArrowDown size={11} />
-        </button>
-        <button
-          onClick={onRemove}
-          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-        >
-          <FaTrash size={11} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
 export default function TemplateBuilder() {
   const navigate = useNavigate();
   const { templateId } = useParams();
@@ -633,6 +831,7 @@ export default function TemplateBuilder() {
   const [saving, setSaving] = useState(false);
   const [showFieldPicker, setShowFieldPicker] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState(null);
+  const [activeParentId, setActiveParentId] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [template, setTemplate] = useState({
@@ -687,31 +886,100 @@ export default function TemplateBuilder() {
   const updateField = (key, value) =>
     setTemplate((prev) => ({ ...prev, [key]: value }));
 
-  const handleAddField = (field) => {
+    const handleAddField = (field) => {
     setTemplate((prev) => {
-      const idx = prev.fields.findIndex(f => f.id === field.id);
-      if (idx !== -1) {
-        const newFields = [...prev.fields];
-        newFields[idx] = field;
-        return { ...prev, fields: newFields };
+      let fields = [...prev.fields];
+      let existingIndex = -1;
+      let existingParentIndex = -1;
+
+      fields.forEach((f, i) => {
+        if (f.id === field.id) existingIndex = i;
+        if (f.subFields) {
+          const subIdx = f.subFields.findIndex(sub => sub.id === field.id);
+          if (subIdx !== -1) { existingIndex = subIdx; existingParentIndex = i; }
+        }
+      });
+
+      if (existingIndex !== -1) {
+        if (existingParentIndex !== -1) {
+          const p = { ...fields[existingParentIndex] };
+          p.subFields = [...p.subFields];
+          p.subFields[existingIndex] = field;
+          fields[existingParentIndex] = p;
+        } else {
+          fields[existingIndex] = field;
+        }
+      } else {
+        if (activeParentId) {
+          const pIdx = fields.findIndex(f => f.id === activeParentId);
+          if (pIdx !== -1) {
+            const p = { ...fields[pIdx] };
+            p.subFields = [...(p.subFields || []), field];
+            fields[pIdx] = p;
+          }
+        } else {
+          fields.push(field);
+        }
       }
-      return { ...prev, fields: [...prev.fields, field] };
+      return { ...prev, fields };
     });
   };
 
   const handleRemoveField = (id) => {
-    setTemplate((prev) => ({
-      ...prev,
-      fields: prev.fields.filter((f) => f.id !== id),
-    }));
+    setTemplate((prev) => {
+      const fields = prev.fields.map(f => {
+        if (f.subFields) return { ...f, subFields: f.subFields.filter(sub => sub.id !== id) };
+        return f;
+      }).filter(f => f.id !== id);
+      return { ...prev, fields };
+    });
   };
 
-  const handleMoveField = (index, direction) => {
-    const fields = [...template.fields];
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= fields.length) return;
-    [fields[index], fields[targetIndex]] = [fields[targetIndex], fields[index]];
-    setTemplate((prev) => ({ ...prev, fields }));
+  const handleMoveField = (index, direction, parentId = null) => {
+    setTemplate((prev) => {
+      const fields = [...prev.fields];
+      if (parentId) {
+        const pIdx = fields.findIndex(f => f.id === parentId);
+        if (pIdx !== -1) {
+          const p = { ...fields[pIdx] };
+          const subs = [...(p.subFields || [])];
+          const targetIndex = index + direction;
+          if (targetIndex >= 0 && targetIndex < subs.length) {
+            [subs[index], subs[targetIndex]] = [subs[targetIndex], subs[index]];
+            p.subFields = subs;
+            fields[pIdx] = p;
+          }
+        }
+      } else {
+        const targetIndex = index + direction;
+        if (targetIndex >= 0 && targetIndex < fields.length) {
+          [fields[index], fields[targetIndex]] = [fields[targetIndex], fields[index]];
+        }
+      }
+      return { ...prev, fields };
+    });
+  };
+
+  const handleMoveToTable = (fieldId, targetParentId) => {
+    setTemplate((prev) => {
+      let fields = [...prev.fields];
+      let fieldToMove = null;
+      
+      const rootIdx = fields.findIndex(f => f.id === fieldId);
+      if (rootIdx !== -1) {
+        fieldToMove = fields[rootIdx];
+        fields.splice(rootIdx, 1);
+      }
+      if (!fieldToMove) return prev; 
+
+      const pIdx = fields.findIndex(f => f.id === targetParentId);
+      if (pIdx !== -1) {
+        const p = { ...fields[pIdx] };
+        p.subFields = [...(p.subFields || []), fieldToMove];
+        fields[pIdx] = p;
+      }
+      return { ...prev, fields };
+    });
   };
 
   const handleSave = async () => {
@@ -770,9 +1038,20 @@ export default function TemplateBuilder() {
           onClose={() => {
             setShowFieldPicker(false);
             setEditingFieldId(null);
+            setActiveParentId(null);
           }}
           onSelect={handleAddField}
-          editingField={editingFieldId ? template.fields.find(f => f.id === editingFieldId) : null}
+          editingField={editingFieldId ? (() => {
+            for (let f of template.fields) {
+              if (f.id === editingFieldId) return f;
+              if (f.subFields) {
+                const sub = f.subFields.find(s => s.id === editingFieldId);
+                if (sub) return sub;
+              }
+            }
+            return null;
+          })() : null}
+          isSubField={!!activeParentId}
         />
       )}
 
@@ -935,29 +1214,40 @@ export default function TemplateBuilder() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2 mb-3">
-                  {template.fields.map((f, i) => (
-                    <FieldItem
-                      key={f.id}
-                      field={f}
-                      index={i}
-                      total={template.fields.length}
-                      onMoveUp={() => handleMoveField(i, -1)}
-                      onMoveDown={() => handleMoveField(i, 1)}
-                      onRemove={() => handleRemoveField(f.id)}
-                      onEdit={() => {
-                        setEditingFieldId(f.id);
-                        setShowFieldPicker(true);
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <button
-                onClick={() => {
-                  setEditingFieldId(null);
-                  setShowFieldPicker(true);
-                }}
+                    {template.fields.map((f, i) => (
+                      <FieldItem
+                        key={f.id}
+                        field={f}
+                        index={i}
+                        total={template.fields.length}
+                        onMoveUp={(subIndex = i, isSub = false, parentId = null) => {
+                          if (isSub) handleMoveField(subIndex, -1, parentId);
+                          else handleMoveField(i, -1);
+                        }}
+                        onMoveDown={(subIndex = i, isSub = false, parentId = null) => {
+                          if (isSub) handleMoveField(subIndex, 1, parentId);
+                          else handleMoveField(i, 1);
+                        }}
+                        onRemove={(id = f.id, parentId = null) => handleRemoveField(id)}
+                        onEdit={(id = f.id, parentId = null) => {
+                          setEditingFieldId(id);
+                          setActiveParentId(parentId);
+                          setShowFieldPicker(true);
+                        }}
+                        onAddSubField={(parentId) => {
+                          setEditingFieldId(null);
+                          setActiveParentId(parentId);
+                          setShowFieldPicker(true);
+                        }}
+                        onMoveToTable={handleMoveToTable}
+                        allGroups={template.fields.filter(x => x.type === 'table_group')}
+                      />
+                    ))}
+                  </div>
+                )}
+  
+                <button
+                onClick={() => { setEditingFieldId(null); setActiveParentId(null); setShowFieldPicker(true); }}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-indigo-200 text-indigo-500 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 font-bold text-sm transition-all"
               >
                 <FaPlus size={13} /> Tambah Field
