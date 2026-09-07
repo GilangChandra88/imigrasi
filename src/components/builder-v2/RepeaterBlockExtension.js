@@ -12,8 +12,9 @@ export const RepeaterBlockExtension = Node.create({
   addAttributes() {
     return {
       fieldId: { default: null },
-      fieldName: { default: 'Daftar Pegawai' },
+      fieldName: { default: 'Data Pegawai' },
       repeaterType: { default: 'pegawai' },
+      allowMultiple: { default: true },
     };
   },
 

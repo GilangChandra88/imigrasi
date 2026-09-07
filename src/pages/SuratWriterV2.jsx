@@ -341,8 +341,8 @@ export default function SuratWriterV2() {
                       required={field.isRequired}
                     >
                       <option value="" disabled>-- Pilih {field.fieldName.replace(/_/g, ' ')} --</option>
-                      {field.fieldOptions?.map((opt, i) => (
-                        <option key={i} value={opt}>{opt}</option>
+                      {field.fieldOptions?.filter(opt => opt.trim() !== '').map((opt, i) => (
+                        <option key={i} value={opt.trim()}>{opt.trim()}</option>
                       ))}
                     </select>
                   ) : field.fieldType === 'date' ? (
@@ -439,12 +439,14 @@ export default function SuratWriterV2() {
         </div>
 
         {/* Right Panel: Live Document Preview */}
-        <div className="w-full lg:w-2/3 bg-slate-200 rounded-xl p-4 sm:p-8 overflow-y-auto flex justify-center">
+        <div className="w-full lg:w-2/3 bg-slate-200 rounded-xl p-4 sm:p-8 overflow-auto">
           <div 
-            className="bg-white w-full max-w-[210mm] min-h-[297mm] shadow-md flex flex-col text-slate-900"
+            className="bg-white mx-auto shadow-md flex flex-col text-slate-900 shrink-0"
             style={{
+              width: "794px",
+              minHeight: "1123px",
               fontFamily: "'Times New Roman', Times, serif",
-              padding: "1.5cm 1.5cm 1.5cm 2cm"
+              padding: "57px 57px 57px 76px"
             }}
           >
             {template?.hasKopSurat && (

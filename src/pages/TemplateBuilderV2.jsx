@@ -20,7 +20,7 @@ import { collection, addDoc, updateDoc, doc, getDoc, serverTimestamp } from 'fir
 import { 
   FaBold, FaItalic, FaUnderline, FaAlignLeft, FaAlignCenter, 
   FaAlignRight, FaAlignJustify, FaSave, FaPlus, FaCog, FaTable,
-  FaIndent, FaOutdent, FaBorderNone
+  FaIndent, FaOutdent, FaBorderNone, FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
 
 const TablePropsForm = ({ editor }) => {
@@ -153,6 +153,9 @@ export default function TemplateBuilderV2() {
   const [editingField, setEditingField] = useState(null);
   const [showVariableGrid, setShowVariableGrid] = useState(false);
   const [clearRightPanel, setClearRightPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState('form');
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!templateId);
   const [, forceUpdate] = useState(0);
@@ -252,6 +255,16 @@ export default function TemplateBuilderV2() {
     })() : false;
 
   useEffect(() => {
+    if (editingField || isRepeaterActive) {
+      setActiveTab('variable');
+    } else if (isTableActive) {
+      setActiveTab('table');
+    } else {
+      setActiveTab('form');
+    }
+  }, [editingField, isRepeaterActive, isTableActive]);
+
+  useEffect(() => {
     const fetchTemplate = async () => {
       if (templateId) {
         try {
@@ -325,7 +338,7 @@ export default function TemplateBuilderV2() {
           vars.push({
             ...node.attrs,
             fieldType: 'pegawai',
-            allowMultiple: true,
+            allowMultiple: node.attrs.allowMultiple !== false,
             fieldName: node.attrs.fieldName || 'Data Pegawai'
           });
         }
@@ -457,20 +470,39 @@ export default function TemplateBuilderV2() {
       {/* Top Header & Toolbar (Sticky) */}
       <div className="bg-white border-b border-slate-200 shrink-0 shadow-sm z-10">
         <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-xl font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none px-1 py-0.5 w-[400px]"
-            placeholder="Judul Dokumen Tanpa Judul"
-          />
-          <button 
-            onClick={saveTemplate}
-            disabled={isSaving}
-            className="bg-indigo-600 text-white px-4 py-2 rounded font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
-          >
-            <FaSave /> {isSaving ? 'Menyimpan...' : 'Simpan'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+               onClick={() => setShowLeftPanel(!showLeftPanel)}
+               className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded transition-colors"
+               title="Toggle Panel Pengaturan (Kiri)"
+            >
+               {showLeftPanel ? <FaChevronLeft /> : <FaChevronRight />}
+            </button>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-xl font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none px-1 py-0.5 w-[400px]"
+              placeholder="Judul Dokumen Tanpa Judul"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={saveTemplate}
+              disabled={isSaving}
+              className="bg-indigo-600 text-white px-4 py-2 rounded font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+            >
+              <FaSave /> {isSaving ? 'Menyimpan...' : 'Simpan'}
+            </button>
+            <div className="w-px h-6 bg-slate-300"></div>
+            <button 
+               onClick={() => setShowRightPanel(!showRightPanel)}
+               className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded transition-colors"
+               title="Toggle Panel Konfigurasi (Kanan)"
+            >
+               {showRightPanel ? <FaChevronRight /> : <FaChevronLeft />}
+            </button>
+          </div>
         </div>
 
         {/* Toolbar Bawah */}
@@ -552,6 +584,7 @@ export default function TemplateBuilderV2() {
       <div className="flex-1 flex overflow-hidden">
         
         {/* Panel Pengaturan (Kiri) */}
+        {showLeftPanel && (
         <div className="w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col shadow-[4px_0_15px_-5px_rgba(0,0,0,0.05)] z-10">
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
             <FaCog className="text-slate-400" />
@@ -652,10 +685,11 @@ export default function TemplateBuilderV2() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Kertas A4 (Tengah) */}
         <div 
-          className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-[#F8F9FA]"
+          className="flex-1 overflow-auto bg-[#F8F9FA] p-4 sm:p-8"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setEditingField(null);
@@ -668,10 +702,12 @@ export default function TemplateBuilderV2() {
           }}
         >
           <div 
-            className="bg-white w-full max-w-[210mm] min-h-[297mm] shadow-md border border-slate-200 mb-10 flex flex-col text-slate-900"
+            className="bg-white mx-auto shadow-md border border-slate-200 mb-10 flex flex-col text-slate-900 shrink-0"
             style={{
+              width: "794px",
+              minHeight: "1123px",
               fontFamily: "'Times New Roman', Times, serif",
-              padding: "1.5cm 1.5cm 1.5cm 2cm"
+              padding: "57px 57px 57px 76px"
             }}
           >
             {hasKopSurat && (
@@ -759,21 +795,40 @@ export default function TemplateBuilderV2() {
         </div>
 
         {/* Panel Konfigurasi Kanan */}
-        <div className="w-80 bg-white border-l border-slate-200 shrink-0 flex flex-col shadow-[-4px_0_15px_-5px_rgba(0,0,0,0.05)] z-10">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-            <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider">Variabel Form</h2>
-            {editingField && (
-              <button 
-                onClick={() => setEditingField(null)}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
-              >
-                Tutup
-              </button>
-            )}
+        {showRightPanel && (
+        <div className="w-[340px] bg-white border-l border-slate-200 shrink-0 flex flex-col shadow-[-4px_0_15px_-5px_rgba(0,0,0,0.05)] z-10">
+          <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
+            <button
+              onClick={() => {
+                setActiveTab('form');
+                setEditingField(null);
+                setClearRightPanel(true);
+                if (editor) {
+                  editor.commands.setTextSelection(editor.state.selection.from);
+                  editor.commands.blur();
+                }
+              }}
+              className={`flex-1 py-3 px-1 text-[11px] font-bold text-center border-b-2 transition-colors ${activeTab === 'form' ? 'border-indigo-600 text-indigo-700 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            >
+              FORM ISIAN
+            </button>
+            <button
+              onClick={() => setActiveTab('variable')}
+              className={`flex-1 py-3 px-1 text-[11px] font-bold text-center border-b-2 transition-colors ${activeTab === 'variable' ? 'border-indigo-600 text-indigo-700 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            >
+              VARIABEL
+            </button>
+            <button
+              onClick={() => setActiveTab('table')}
+              className={`flex-1 py-3 px-1 text-[11px] font-bold text-center border-b-2 transition-colors ${activeTab === 'table' ? 'border-indigo-600 text-indigo-700 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            >
+              TABEL
+            </button>
           </div>
           
           <div className="p-5 flex-1 overflow-y-auto">
-            {!editingField && !isTableActive && !isRepeaterActive && !showVariableGrid ? (
+            {activeTab === 'form' && (
+              !showVariableGrid ? (
               <div className="animate-fadeIn space-y-4">
                  <p className="text-xs text-slate-500 mb-4">Pratinjau form isian yang akan diisi oleh user:</p>
                  
@@ -804,7 +859,7 @@ export default function TemplateBuilderV2() {
                    <p className="text-xs text-slate-400">Klik variabel atau tabel di kertas untuk mengedit pengaturannya.</p>
                  </div>
               </div>
-            ) : !editingField && showVariableGrid ? (
+            ) : (
               <div className="animate-fadeIn">
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-sm text-slate-600 font-semibold">Pilih Tipe Form:</p>
@@ -837,14 +892,9 @@ export default function TemplateBuilderV2() {
                     <span className="text-xs font-semibold text-slate-700">Dropdown</span>
                   </button>
 
-                  <button onClick={() => insertVariable('pegawai')} className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
-                    <div className="w-8 h-8 rounded bg-rose-100 text-rose-600 flex items-center justify-center font-bold">👤</div>
-                    <span className="text-xs font-semibold text-slate-700">Data Pegawai</span>
-                  </button>
-
                   <button onClick={() => insertRepeater && insertRepeater()} className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-colors col-span-2">
-                    <div className="w-full h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs gap-2">🔁 Area Pengulangan (Loop)</div>
-                    <span className="text-xs font-semibold text-slate-700 text-center">Buat desain tabel/layout sendiri yang akan diulang untuk tiap pegawai terpilih.</span>
+                    <div className="w-full h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs gap-2">🔄 Area Pegawai (Dinamis)</div>
+                    <span className="text-xs font-semibold text-slate-700 text-center">Buat desain tabel/layout sendiri untuk pegawai (Bisa loop atau tidak).</span>
                   </button>
 
                   <button onClick={() => insertVariable('list')} className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
@@ -853,7 +903,10 @@ export default function TemplateBuilderV2() {
                   </button>
                 </div>
               </div>
-            ) : editingField ? (
+            ))}
+
+            {activeTab === 'variable' && (
+              editingField ? (
               <div className="space-y-5 animate-fadeIn">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Variabel</label>
@@ -879,7 +932,6 @@ export default function TemplateBuilderV2() {
                     <option value="number">Angka</option>
                     <option value="date">Tanggal</option>
                     <option value="dropdown">Dropdown (Pilihan)</option>
-                    <option value="pegawai">Data Pegawai</option>
                     <option value="list">List (Per Poin)</option>
                   </select>
                 </div>
@@ -889,7 +941,7 @@ export default function TemplateBuilderV2() {
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Opsi Pilihan</label>
                     <textarea
                       value={editingField.attrs.fieldOptions ? editingField.attrs.fieldOptions.join('\n') : ''}
-                      onChange={(e) => handleUpdateField('fieldOptions', e.target.value.split('\n').map(s => s.trim()).filter(Boolean))}
+                      onChange={(e) => handleUpdateField('fieldOptions', e.target.value.split('\n'))}
                       className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
                       placeholder="Ketik opsi di sini (satu baris satu opsi)"
                     />
@@ -910,60 +962,6 @@ export default function TemplateBuilderV2() {
                       <option value="A">Huruf Besar (A., B., C.)</option>
                       <option value="dot">Bullet Point (•)</option>
                     </select>
-                  </div>
-                )}
-
-                {editingField.attrs.fieldType === 'pegawai' && (
-                  <div className="space-y-4 pt-4 border-t border-slate-200">
-                    <label className="block text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Pengaturan Data Pegawai</label>
-                    
-                    <div>
-                      <span className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase">Elemen yang Ditampilkan</span>
-                      <div className="grid grid-cols-2 gap-2">
-                        {['nama', 'nip', 'pangkat', 'jabatan'].map(field => (
-                          <label key={field} className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <input 
-                              type="checkbox" 
-                              checked={editingField.attrs.pegawaiFields?.includes(field) ?? true}
-                              onChange={(e) => {
-                                const current = editingField.attrs.pegawaiFields || ['nama', 'nip', 'pangkat', 'jabatan'];
-                                const updated = e.target.checked ? [...current, field] : current.filter(f => f !== field);
-                                handleUpdateField('pegawaiFields', updated);
-                              }}
-                              className="w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-                            />
-                            <span className="capitalize">{field}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase">Gaya Susunan (Layout)</span>
-                      <select
-                        value={editingField.attrs.pegawaiFormat || 'bertumpuk'}
-                        onChange={(e) => handleUpdateField('pegawaiFormat', e.target.value)}
-                        className="w-full border border-slate-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white"
-                      >
-                        <option value="bertumpuk">Bertumpuk Berlabel (Sangat Rapi)</option>
-                        <option value="sebaris">Sebaris Pendek (Nama - NIP)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                       <label className="flex items-start gap-2 cursor-pointer bg-slate-50 p-2.5 rounded border border-slate-200 hover:border-indigo-300 transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={editingField.attrs.allowMultiple || false}
-                          onChange={(e) => handleUpdateField('allowMultiple', e.target.checked)}
-                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <span className="text-xs font-semibold text-slate-700 block">Izinkan Pilih Banyak Pegawai</span>
-                          <span className="text-[10px] text-slate-500 leading-tight block mt-1">Sistem akan mengulang (looping) format ke bawah lengkap dengan nomor urut. Sangat cocok untuk Surat Perintah.</span>
-                        </div>
-                      </label>
-                    </div>
                   </div>
                 )}
 
@@ -1010,32 +1008,63 @@ export default function TemplateBuilderV2() {
                   Perubahan Anda tersimpan secara <strong>real-time</strong> ke dalam dokumen. Jangan lupa klik tombol "Simpan" di atas setelah selesai.
                 </div>
               </div>
-            ) : null}
-
-            {isRepeaterActive && !editingField && (
-              <div className="mt-8 pt-6 border-t border-slate-200 animate-fadeIn">
-                <h3 className="font-bold text-indigo-700 mb-4 text-sm uppercase tracking-wider">Loop Pegawai</h3>
+              ) : isRepeaterActive ? (
+              <div className="animate-fadeIn">
+                <h3 className="font-bold text-indigo-700 mb-4 text-sm uppercase tracking-wider">Area Pegawai (Dinamis)</h3>
                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded text-xs text-indigo-700 mb-4">
-                  Klik tombol di bawah untuk memasukkan data otomatis ke dalam area pengulangan ini.
+                  Susun formating (Tabel/Teks) di dalam area pengulangan ini lalu klik tombol di bawah untuk menyisipkan variabelnya.
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mb-6">
                   <button onClick={() => insertVariable('pegawai_index')} className="p-2 bg-white border border-slate-200 rounded text-xs hover:bg-slate-50 font-semibold shadow-sm">No. Urut (1,2,3)</button>
                   <button onClick={() => insertVariable('pegawai_nama')} className="p-2 bg-white border border-slate-200 rounded text-xs hover:bg-slate-50 font-semibold shadow-sm">Nama</button>
                   <button onClick={() => insertVariable('pegawai_nip')} className="p-2 bg-white border border-slate-200 rounded text-xs hover:bg-slate-50 font-semibold shadow-sm">NIP</button>
                   <button onClick={() => insertVariable('pegawai_pangkat')} className="p-2 bg-white border border-slate-200 rounded text-xs hover:bg-slate-50 font-semibold shadow-sm">Pangkat/Gol.</button>
                   <button onClick={() => insertVariable('pegawai_jabatan')} className="p-2 bg-white border border-slate-200 rounded text-xs hover:bg-slate-50 font-semibold shadow-sm">Jabatan</button>
                 </div>
+                
+                <div className="pt-4 border-t border-slate-200">
+                  <label className="flex items-start gap-2 cursor-pointer bg-slate-50 p-2.5 rounded border border-slate-200 hover:border-indigo-300 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={editor?.getAttributes('repeaterBlock')?.allowMultiple !== false}
+                      onChange={(e) => {
+                        if (editor) {
+                          editor.commands.updateAttributes('repeaterBlock', { allowMultiple: e.target.checked });
+                        }
+                      }}
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <span className="text-xs font-semibold text-slate-700 block">Izinkan Pilih Banyak Pegawai</span>
+                      <span className="text-[10px] text-slate-500 leading-tight block mt-1">Jika dicentang, sistem akan mengulang (looping) format ini. Jika tidak dicentang, hanya bisa memilih 1 pegawai (cocok untuk formatting bebas tanpa loop).</span>
+                    </div>
+                  </label>
+                </div>
               </div>
+              ) : (
+                <div className="text-center py-10 opacity-60 animate-fadeIn mt-8">
+                   <p className="text-sm font-bold text-slate-500 mb-2">Pilih Variabel/Loop</p>
+                   <p className="text-xs text-slate-400 px-4">Klik salah satu variabel atau area pengulangan di kertas untuk melihat propertinya.</p>
+                </div>
+              )
             )}
 
-            {isTableActive && (
-              <div className="mt-8 pt-6 border-t border-slate-200 animate-fadeIn">
+            {activeTab === 'table' && (
+              isTableActive ? (
+              <div className="animate-fadeIn">
                 <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">Properti Tabel</h3>
                 <TablePropsForm editor={editor} />
               </div>
+              ) : (
+                <div className="text-center py-10 opacity-60 animate-fadeIn mt-8">
+                   <p className="text-sm font-bold text-slate-500 mb-2">Pilih Tabel</p>
+                   <p className="text-xs text-slate-400 px-4">Klik tabel di kertas untuk melihat propertinya.</p>
+                </div>
+              )
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -54,38 +54,36 @@ function PreviewFieldNodeView({ node }) {
                 {allowMultiple && pegawaiList.length > 1 && (
                    <div className="w-8 shrink-0">{idx + 1}.</div>
                 )}
-                <table className="flex-1 border-collapse border-none m-0 p-0 text-inherit leading-relaxed bg-transparent">
-                  <tbody>
-                    {pegawaiFields.includes('nama') && (
-                      <tr className="border-none p-0 m-0 bg-transparent">
-                        <td className="w-24 p-0 align-top border-none font-normal">Nama</td>
-                        <td className="w-4 p-0 align-top border-none text-center">:</td>
-                        <td className="p-0 align-top border-none uppercase">{pegawai.nama}</td>
-                      </tr>
-                    )}
-                    {pegawaiFields.includes('nip') && (
-                      <tr className="border-none p-0 m-0 bg-transparent">
-                        <td className="w-24 p-0 align-top border-none font-normal">NIP</td>
-                        <td className="w-4 p-0 align-top border-none text-center">:</td>
-                        <td className="p-0 align-top border-none font-normal">{pegawai.nip}</td>
-                      </tr>
-                    )}
-                    {pegawaiFields.includes('pangkat') && (
-                      <tr className="border-none p-0 m-0 bg-transparent">
-                        <td className="w-24 p-0 align-top border-none font-normal">Pangkat/Gol.</td>
-                        <td className="w-4 p-0 align-top border-none text-center">:</td>
-                        <td className="p-0 align-top border-none font-normal">{pegawai.pangkat}</td>
-                      </tr>
-                    )}
-                    {pegawaiFields.includes('jabatan') && (
-                      <tr className="border-none p-0 m-0 bg-transparent">
-                        <td className="w-24 p-0 align-top border-none font-normal">Jabatan</td>
-                        <td className="w-4 p-0 align-top border-none text-center">:</td>
-                        <td className="p-0 align-top border-none font-normal">{pegawai.jabatan}</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                <div className="flex-1 flex flex-col text-inherit leading-relaxed">
+                  {pegawaiFields.includes('nama') && (
+                    <div className="flex">
+                      <div className="w-24 shrink-0 font-normal">Nama</div>
+                      <div className="w-4 shrink-0 text-center">:</div>
+                      <div className="flex-1 uppercase">{pegawai.nama}</div>
+                    </div>
+                  )}
+                  {pegawaiFields.includes('nip') && (
+                    <div className="flex">
+                      <div className="w-24 shrink-0 font-normal">NIP</div>
+                      <div className="w-4 shrink-0 text-center">:</div>
+                      <div className="flex-1 font-normal">{pegawai.nip}</div>
+                    </div>
+                  )}
+                  {pegawaiFields.includes('pangkat') && (
+                    <div className="flex">
+                      <div className="w-24 shrink-0 font-normal">Pangkat/Gol.</div>
+                      <div className="w-4 shrink-0 text-center">:</div>
+                      <div className="flex-1 font-normal">{pegawai.pangkat}</div>
+                    </div>
+                  )}
+                  {pegawaiFields.includes('jabatan') && (
+                    <div className="flex">
+                      <div className="w-24 shrink-0 font-normal">Jabatan</div>
+                      <div className="w-4 shrink-0 text-center">:</div>
+                      <div className="flex-1 font-normal">{pegawai.jabatan}</div>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
