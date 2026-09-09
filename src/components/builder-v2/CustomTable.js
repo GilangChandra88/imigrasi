@@ -79,6 +79,9 @@ export const CustomTable = Table.extend({
           return attributes.borderless ? { 'data-borderless': 'true' } : {};
         },
       },
+      isRepeater: { default: false },
+      fieldId: { default: null },
+      fieldName: { default: 'Tabel Dinamis' },
     };
   },
 

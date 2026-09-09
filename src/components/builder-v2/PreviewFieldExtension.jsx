@@ -109,6 +109,48 @@ function PreviewFieldNodeView({ node }) {
     }
   }
 
+  if (fieldType === 'table_loop') {
+    const tableColumns = node.attrs.tableColumns || [];
+    const rows = Array.isArray(value) && value.length > 0 ? value : [];
+
+    return (
+      <NodeViewWrapper className="block w-full mt-2 mb-2" as="div">
+        <table className={`w-full border-collapse border border-slate-300 text-inherit text-sm ${formatClassStr}`}>
+          <thead>
+            <tr>
+              {tableColumns.map(col => (
+                <th key={col.id} className="border border-slate-300 p-2 text-center bg-slate-50 font-bold" style={{ width: col.width || 'auto' }}>
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length > 0 ? (
+              rows.map((row, idx) => (
+                <tr key={idx}>
+                  {tableColumns.map(col => (
+                    <td key={col.id} className="border border-slate-300 p-2 align-top whitespace-pre-wrap">
+                      {col.id === 'no' ? idx + 1 : row[col.id] || ''}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                {tableColumns.map(col => (
+                  <td key={col.id} className="border border-slate-300 p-2 text-slate-400 italic text-center">
+                    [{col.label}]
+                  </td>
+                ))}
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </NodeViewWrapper>
+    );
+  }
+
   if (fieldType === 'list') {
     const isArray = Array.isArray(value) && value.length > 0;
     return (
@@ -163,6 +205,7 @@ export const PreviewFieldExtension = Node.create({
       pegawaiFields: { default: ['nama', 'nip', 'pangkat', 'jabatan'] },
       pegawaiFormat: { default: 'bertumpuk' },
       allowMultiple: { default: false },
+      tableColumns: { default: [{ id: 'no', label: 'No', width: '10%' }, { id: 'uraian', label: 'Uraian', width: 'auto' }] },
       isBold: { default: false },
       isItalic: { default: false },
       isUnderline: { default: false }

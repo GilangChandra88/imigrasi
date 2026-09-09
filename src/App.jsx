@@ -4,14 +4,11 @@ import Login from './pages/Login'
 import MakSetup from './pages/MakSetup'
 import NomorSuratKanim from './pages/NomorSuratKanim'
 import Pegawai from './pages/Pegawai'
-import SuratEditor from './pages/SuratEditor'
-import TemplateBuilder from './pages/TemplateBuilder'
-import SuratWriter from './pages/SuratWriter'
-import TemplateBuilderV2 from './pages/TemplateBuilderV2'
-import SuratWriterV2 from './pages/SuratWriterV2'
-import TemplateListV2 from './pages/TemplateListV2'
 import Dashboard from './pages/Dashboard'
-import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaLayerGroup, FaSignOutAlt } from 'react-icons/fa'
+import Persuratan from './pages/Persuratan/index'
+import SuratForm from './pages/Persuratan/SuratForm'
+import LPJ from './pages/LPJ/index'
+import { FaHome, FaSitemap, FaChevronLeft, FaChevronRight, FaFileAlt, FaUsers, FaLayerGroup, FaSignOutAlt, FaEnvelope, FaFolderOpen } from 'react-icons/fa'
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from './firebase'
@@ -31,8 +28,8 @@ function Sidebar() {
   return (
     <nav className={`print:hidden ${isCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 sticky top-0 transition-all duration-300 z-50`}>
       <div className={`p-4 sm:p-6 border-b border-slate-100 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-        {!isCollapsed && <span className="font-bold text-xl text-indigo-700 tracking-tight truncate mr-2">Imigrasi DB</span>}
-        <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-lg transition-colors shrink-0">
+        {!isCollapsed && <span className="font-bold text-xl text-slate-800 tracking-tight truncate mr-2">Imigrasi DB</span>}
+        <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
           {isCollapsed ? <FaChevronRight size={14} /> : <FaChevronLeft size={14} />}
         </button>
       </div>
@@ -40,17 +37,35 @@ function Sidebar() {
         <Link 
           to="/" 
           title="Dashboard"
-          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
         >
           <FaHome size={18} className="shrink-0" /> 
           {!isCollapsed && <span className="truncate">Dashboard</span>}
+        </Link>
+
+        <Link 
+          to="/persuratan" 
+          title="Persuratan"
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/persuratan') ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+        >
+          <FaEnvelope size={18} className="shrink-0" /> 
+          {!isCollapsed && <span className="truncate">Persuratan</span>}
+        </Link>
+
+        <Link 
+          to="/lpj" 
+          title="LPJ"
+          className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/lpj') ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+        >
+          <FaFolderOpen size={18} className="shrink-0" /> 
+          {!isCollapsed && <span className="truncate">LPJ</span>}
         </Link>
         
         {isSuperAdmin && (
           <Link 
             to="/mak-setup" 
             title="MAK Setup"
-            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/mak-setup' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/mak-setup' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
           >
             <FaSitemap size={18} className="shrink-0" /> 
             {!isCollapsed && <span className="truncate">MAK Setup</span>}
@@ -61,7 +76,7 @@ function Sidebar() {
           <Link 
             to="/nomor-surat-kanim" 
             title="Nomor Surat Kanim"
-            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/nomor-surat-kanim' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${path === '/nomor-surat-kanim' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
           >
             <FaFileAlt size={18} className="shrink-0" /> 
             {!isCollapsed && <span className="truncate">Nomor Surat</span>}
@@ -72,34 +87,13 @@ function Sidebar() {
           <Link 
             to="/Pegawai" 
             title="Pegawai"
-            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/Pegawai') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
+            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/Pegawai') ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
           >
             <FaUsers size={18} className="shrink-0" /> 
             {!isCollapsed && <span className="truncate">Data Pegawai</span>}
           </Link>
         )}
 
-        {isAdmin && (
-          <Link 
-            to="/surat-editor" 
-            title="Template Builder"
-            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/surat-editor') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
-          >
-            <FaLayerGroup size={18} className="shrink-0" /> 
-            {!isCollapsed && <span className="truncate">Template Builder</span>}
-          </Link>
-        )}
-
-        {isAdmin && (
-          <Link 
-            to="/templates-v2" 
-            title="Template V2"
-            className={`flex items-center gap-3 py-3 rounded-xl font-semibold transition-all ${isActive('/templates-v2') || isActive('/builder-v2') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} ${isCollapsed ? 'justify-center px-0' : 'px-4'}`}
-          >
-            <FaLayerGroup size={18} className="shrink-0" /> 
-            {!isCollapsed && <span className="truncate">Template V2</span>}
-          </Link>
-        )}
       </div>
 
       <div className="p-4 border-t border-slate-200 bg-slate-50 mt-auto">
@@ -149,6 +143,30 @@ function AppContent() {
               </ProtectedRoute>
             } />
 
+            <Route path="/persuratan" element={
+              <ProtectedRoute>
+                <Persuratan />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/persuratan/form/:suratId" element={
+              <ProtectedRoute>
+                <SuratForm />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/lpj" element={
+              <ProtectedRoute>
+                <LPJ />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/lpj/:packId" element={
+              <ProtectedRoute>
+                <LPJ />
+              </ProtectedRoute>
+            } />
+
             <Route path="/mak-setup" element={
               <ProtectedRoute requireRole="Super Admin"><MakSetup /></ProtectedRoute>
             } />
@@ -159,35 +177,6 @@ function AppContent() {
             
             <Route path="/Pegawai" element={
               <ProtectedRoute requireRole="Super Admin"><Pegawai /></ProtectedRoute>
-            } />
-            
-            <Route path="/surat-editor" element={
-              <ProtectedRoute requireRole="Admin"><SuratEditor /></ProtectedRoute>
-            } />
-            
-            <Route path="/surat-editor/builder/:templateId?" element={
-              <ProtectedRoute requireRole="Admin"><TemplateBuilder /></ProtectedRoute>
-            } />
-
-            <Route path="/surat-editor/tulis/:templateId" element={
-              <ProtectedRoute><SuratWriter /></ProtectedRoute>
-            } />
-
-            {/* Builder 2.0 Routes */}
-            <Route path="/templates-v2" element={
-              <ProtectedRoute requireRole="Admin"><TemplateListV2 /></ProtectedRoute>
-            } />
-            
-            <Route path="/builder-v2" element={
-              <ProtectedRoute requireRole="Admin"><TemplateBuilderV2 /></ProtectedRoute>
-            } />
-            
-            <Route path="/builder-v2/:templateId" element={
-              <ProtectedRoute requireRole="Admin"><TemplateBuilderV2 /></ProtectedRoute>
-            } />
-            
-            <Route path="/writer-v2/:templateId" element={
-              <ProtectedRoute><SuratWriterV2 /></ProtectedRoute>
             } />
           </Routes>
         </main>

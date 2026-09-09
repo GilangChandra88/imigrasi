@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, secondaryAuth } from '../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot, query } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { FaUserPlus, FaTrash, FaPen, FaUsers, FaMedal, FaBriefcase, FaSave, FaTimes, FaPlus, FaKey } from 'react-icons/fa';
+import { FaUserPlus, FaTrash, FaPen, FaUsers, FaMedal, FaBriefcase, FaSave, FaTimes, FaPlus, FaKey, FaStar } from 'react-icons/fa';
 
 export default function Pegawai() {
   const [activeTab, setActiveTab] = useState('Pegawai');
@@ -13,7 +13,7 @@ export default function Pegawai() {
 
   const [isAddingPegawai, setIsAddingPegawai] = useState(false);
   const [editingPegawaiId, setEditingPegawaiId] = useState(null);
-  const [formPegawai, setFormPegawai] = useState({ nama: '', nip: '', pangkat: '', jabatan: '', role: 'Pegawai' });
+  const [formPegawai, setFormPegawai] = useState({ nama: '', nip: '', pangkat: '', jabatan: '', role: 'Pegawai', status_khusus: '' });
 
   const [isAddingMaster, setIsAddingMaster] = useState(false);
   const [editingMasterId, setEditingMasterId] = useState(null);
@@ -47,7 +47,26 @@ export default function Pegawai() {
   const handleSavePegawai = async (e) => {
     e.preventDefault();
     if (!formPegawai.nama || !formPegawai.nip) return;
+    
     try {
+      // Check if status_khusus is already held by someone else
+      let oldHolder = null;
+      if (['Bendahara', 'PPK', 'KPA'].includes(formPegawai.status_khusus)) {
+        oldHolder = PegawaiList.find(
+          p => p.status_khusus === formPegawai.status_khusus && p.id !== editingPegawaiId
+        );
+        if (oldHolder) {
+          if (!window.confirm(`Status ${formPegawai.status_khusus} saat ini dipegang oleh ${oldHolder.nama}.\nApakah Anda ingin memindahkan status ini ke ${formPegawai.nama}?`)) {
+            return;
+          }
+        }
+      }
+
+      // If user agreed to reassign, clear it from the old holder
+      if (oldHolder) {
+        await updateDoc(doc(db, 'pegawai', oldHolder.id), { status_khusus: '' });
+      }
+
       if (editingPegawaiId) {
         await updateDoc(doc(db, 'pegawai', editingPegawaiId), formPegawai);
       } else {
@@ -55,7 +74,7 @@ export default function Pegawai() {
       }
       setIsAddingPegawai(false);
       setEditingPegawaiId(null);
-      setFormPegawai({ nama: '', nip: '', pangkat: '', jabatan: '', role: 'Pegawai' });
+      setFormPegawai({ nama: '', nip: '', pangkat: '', jabatan: '', role: 'Pegawai', status_khusus: '' });
     } catch (error) { console.error('Error saving:', error); }
   };
 
@@ -65,7 +84,14 @@ export default function Pegawai() {
   };
 
   const startEditPegawai = (k) => {
-    setFormPegawai({ nama: k.nama, nip: k.nip, pangkat: k.pangkat || '', jabatan: k.jabatan || '', role: k.role || 'Pegawai' });
+    setFormPegawai({ 
+      nama: k.nama, 
+      nip: k.nip, 
+      pangkat: k.pangkat || '', 
+      jabatan: k.jabatan || '', 
+      role: k.role || 'Pegawai',
+      status_khusus: k.status_khusus || ''
+    });
     setEditingPegawaiId(k.id);
     setIsAddingPegawai(true);
   };
@@ -138,17 +164,26 @@ export default function Pegawai() {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
               <h2 className="font-bold text-slate-700">Daftar Pegawai</h2>
-              {!isAddingPegawai && <button onClick={() => { setIsAddingPegawai(true); setEditingPegawaiId(null); setFormPegawai({ nama: '', nip: '', pangkat: '', jabatan: '', role: 'Pegawai' }); }} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-all"><FaUserPlus /> Tambah Pegawai</button>}
+              {!isAddingPegawai && <button onClick={() => { setIsAddingPegawai(true); setEditingPegawaiId(null); setFormPegawai({ nama: '', nip: '', pangkat: '', jabatan: '', role: 'Pegawai', status_khusus: '' }); }} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-all"><FaUserPlus /> Tambah Pegawai</button>}
             </div>
 
             {isAddingPegawai && (
-              <form onSubmit={handleSavePegawai} className="p-4 border-b border-indigo-100 bg-indigo-50/30 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+              <form onSubmit={handleSavePegawai} className="p-4 border-b border-indigo-100 bg-indigo-50/30 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div><label className="block text-xs font-bold text-slate-500 mb-1">NAMA</label><input required type="text" value={formPegawai.nama} onChange={e => setFormPegawai({...formPegawai, nama: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" /></div>
                 <div><label className="block text-xs font-bold text-slate-500 mb-1">NIP</label><input required type="text" value={formPegawai.nip} onChange={e => setFormPegawai({...formPegawai, nip: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" /></div>
                 <div><label className="block text-xs font-bold text-slate-500 mb-1">PANGKAT/GOL</label><select value={formPegawai.pangkat} onChange={e => setFormPegawai({...formPegawai, pangkat: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"><option value="">-- Pilih --</option>{pangkatList.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
                 <div><label className="block text-xs font-bold text-slate-500 mb-1">JABATAN</label><select value={formPegawai.jabatan} onChange={e => setFormPegawai({...formPegawai, jabatan: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"><option value="">-- Pilih --</option>{jabatanList.map(j => <option key={j.id} value={j.name}>{j.name}</option>)}</select></div>
                 <div><label className="block text-xs font-bold text-slate-500 mb-1">HAK AKSES</label><select value={formPegawai.role} onChange={e => setFormPegawai({...formPegawai, role: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-indigo-700"><option value="Pegawai">Pegawai</option><option value="Admin">Admin</option><option value="Super Admin">Super Admin</option></select></div>
-                <div className="md:col-span-5 flex justify-end gap-2 mt-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center gap-1"><FaStar className="text-amber-500" /> STATUS KHUSUS</label>
+                  <select value={formPegawai.status_khusus} onChange={e => setFormPegawai({...formPegawai, status_khusus: e.target.value})} className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-700">
+                    <option value="">-- Tidak Ada --</option>
+                    <option value="Bendahara">Bendahara</option>
+                    <option value="PPK">Pejabat Pembuat Komitmen (PPK)</option>
+                    <option value="KPA">Kuasa Pengguna Anggaran (KPA)</option>
+                  </select>
+                </div>
+                <div className="md:col-span-3 flex justify-end gap-2 mt-2">
                   <button type="button" onClick={() => setIsAddingPegawai(false)} className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:bg-slate-100 flex items-center gap-2"><FaTimes /> Batal</button>
                   <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 shadow-sm"><FaSave /> Simpan</button>
                 </div>
@@ -157,13 +192,21 @@ export default function Pegawai() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead><tr className="bg-slate-50 border-b border-slate-200"><th className="p-4 text-xs font-bold text-slate-500">NAMA / HAK AKSES</th><th className="p-4 text-xs font-bold text-slate-500">NIP</th><th className="p-4 text-xs font-bold text-slate-500">JABATAN & PANGKAT</th><th className="p-4 text-xs font-bold text-slate-500">AKUN SISTEM</th><th className="p-4 text-xs font-bold text-slate-500 text-right">AKSI</th></tr></thead>
+                <thead><tr className="bg-slate-50 border-b border-slate-200"><th className="p-4 text-xs font-bold text-slate-500">NAMA / HAK AKSES</th><th className="p-4 text-xs font-bold text-slate-500">NIP</th><th className="p-4 text-xs font-bold text-slate-500">JABATAN & PANGKAT</th><th className="p-4 text-xs font-bold text-slate-500">STATUS KHUSUS</th><th className="p-4 text-xs font-bold text-slate-500">AKUN SISTEM</th><th className="p-4 text-xs font-bold text-slate-500 text-right">AKSI</th></tr></thead>
                 <tbody>
                   {PegawaiList.map((k) => (
                     <tr key={k.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
                       <td className="p-4"><div className="font-bold text-slate-800">{k.nama}</div><div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 mt-1">{k.role || 'Pegawai'}</div></td>
                       <td className="p-4 text-slate-600 font-mono text-sm">{k.nip}</td>
                       <td className="p-4"><div className="text-slate-700 text-sm font-semibold">{k.jabatan || '-'}</div><div className="text-slate-500 text-xs mt-0.5">{k.pangkat || '-'}</div></td>
+                      <td className="p-4">
+                        {k.status_khusus && (
+                          <div className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-md text-xs font-bold">
+                            <FaStar size={10} className="text-amber-500" />
+                            {k.status_khusus === 'PPK' ? 'PPK' : k.status_khusus}
+                          </div>
+                        )}
+                      </td>
                       <td className="p-4">
                         {k.email ? <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded text-xs font-bold border border-emerald-200">{k.email}</span> : <button onClick={() => openAccountModal(k)} className="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 flex items-center gap-1.5"><FaKey /> Buat Akun</button>}
                       </td>

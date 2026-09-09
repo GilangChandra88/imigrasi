@@ -186,22 +186,22 @@ export default function NomorSuratKanim() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white px-6 border-b border-slate-200 flex gap-6 shrink-0 print:hidden overflow-x-auto">
+      <div className="px-6 border-b border-slate-200 flex gap-6 overflow-x-auto print:hidden">
         <button 
           onClick={() => setActiveTab('riwayat')}
-          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'riwayat' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'riwayat' ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
-          <FaFileAlt size={16} /> Riwayat Surat Keluar
+          <FaFileAlt size={16} /> Riwayat Surat
         </button>
         <button 
           onClick={() => setActiveTab('hierarki')}
-          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'hierarki' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'hierarki' ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
           <FaSitemap size={16} /> Hierarki Kode Surat
         </button>
         <button 
           onClick={() => setActiveTab('pengaturan')}
-          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'pengaturan' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'pengaturan' ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
           <FaFolderOpen size={16} /> Pengaturan
         </button>
@@ -221,26 +221,26 @@ export default function NomorSuratKanim() {
                   placeholder="Cari kode / keterangan..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-4 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                  className="w-full pl-4 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-slate-800 focus:border-slate-800 transition-all shadow-sm"
                 />
               </div>
     
-              <div className="flex bg-slate-200 p-1 rounded-xl shrink-0">
+              <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
                 <button 
                   onClick={() => setViewMode('tree')}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === 'tree' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === 'tree' ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   <FaSitemap /> Pohon
                 </button>
                 <button 
                   onClick={() => setViewMode('explorer')}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === 'explorer' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === 'explorer' ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   <FaFolder /> Explorer
                 </button>
                 <button 
                   onClick={() => setViewMode('columns')}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === 'columns' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${viewMode === 'columns' ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   <FaColumns /> Kolom
                 </button>

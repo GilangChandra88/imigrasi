@@ -15,33 +15,46 @@ import { TabExtension } from '../components/builder-v2/TabExtension';
 import { IndentExtension } from '../components/builder-v2/IndentExtension';
 import { TableFocusPlugin } from '../components/builder-v2/TableFocusPlugin';
 import { RepeaterBlockExtension } from '../components/builder-v2/RepeaterBlockExtension';
+import { PageBreakExtension } from '../components/builder-v2/PageBreakExtension';
 import { db } from '../firebase';
 import { collection, addDoc, updateDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   FaBold, FaItalic, FaUnderline, FaAlignLeft, FaAlignCenter, 
   FaAlignRight, FaAlignJustify, FaSave, FaPlus, FaCog, FaTable,
-  FaIndent, FaOutdent, FaBorderNone, FaChevronLeft, FaChevronRight
+  FaIndent, FaOutdent, FaBorderNone, FaChevronLeft, FaChevronRight, FaCut
 } from 'react-icons/fa';
 
-const TablePropsForm = ({ editor }) => {
-  const currentBorderWidth = editor.getAttributes('table').borderWidth || '1px';
-  const currentBorderColor = editor.getAttributes('table').borderColor || '#000000';
+const TablePropsForm = ({ editor, insertVariable }) => {
+  const tableAttrs = editor.getAttributes('table');
+  const currentBorderWidth = tableAttrs.borderWidth || '1px';
+  const currentBorderColor = tableAttrs.borderColor || '#000000';
   const currentBgColor = editor.getAttributes('tableCell').backgroundColor || '#ffffff';
+  
+  const currentIsRepeater = tableAttrs.isRepeater || false;
+  const currentFieldName = tableAttrs.fieldName || 'Tabel Dinamis';
 
   const [borderWidth, setBorderWidth] = useState(currentBorderWidth);
   const [borderColor, setBorderColor] = useState(currentBorderColor);
   const [bgColor, setBgColor] = useState(currentBgColor);
+  const [isRepeater, setIsRepeater] = useState(currentIsRepeater);
+  const [fieldName, setFieldName] = useState(currentFieldName);
 
   useEffect(() => {
     setBorderWidth(currentBorderWidth);
     setBorderColor(currentBorderColor);
     setBgColor(currentBgColor);
-  }, [currentBorderWidth, currentBorderColor, currentBgColor]);
+    setIsRepeater(currentIsRepeater);
+    setFieldName(currentFieldName);
+  }, [currentBorderWidth, currentBorderColor, currentBgColor, currentIsRepeater, currentFieldName]);
 
   const applyChanges = () => {
-     // Gunakan commands terpisah agar jika setCellAttribute gagal (karena seluruh tabel di-select),
-     // setTableAttributes tetap dieksekusi dengan sukses.
-     editor.commands.setTableAttributes({ borderWidth, borderColor });
+     editor.commands.setTableAttributes({ 
+       borderWidth, 
+       borderColor, 
+       isRepeater, 
+       fieldName,
+       fieldId: isRepeater && !tableAttrs.fieldId ? `table_${Date.now()}` : tableAttrs.fieldId
+     });
      
      try {
        editor.commands.setCellAttribute('backgroundColor', bgColor === '#ffffff' ? null : bgColor);
@@ -89,9 +102,49 @@ const TablePropsForm = ({ editor }) => {
          <p className="text-[10px] text-slate-400 mt-1">Pilih warna putih untuk menghapus warna latar.</p>
        </div>
        
+       <div className="pt-3 border-t border-slate-200 mt-2">
+         <label className="flex items-start gap-2 cursor-pointer bg-cyan-50 p-3 rounded-lg border border-cyan-100">
+           <input 
+             type="checkbox" 
+             className="mt-0.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+             checked={isRepeater}
+             onChange={(e) => setIsRepeater(e.target.checked)}
+           />
+           <div>
+             <div className="text-xs font-bold text-cyan-800">Jadikan Tabel Dinamis (Looping)</div>
+             <div className="text-[10px] text-cyan-600 mt-0.5">Semua form isian di tabel ini akan dikelompokkan dan bisa ditambahkan barisnya berulang kali oleh user.</div>
+           </div>
+         </label>
+       </div>
+
+       {isRepeater && (
+         <div className="animate-fadeIn">
+           <label className="block text-xs font-bold text-slate-500 mb-1.5">Nama Tabel Form</label>
+           <input 
+             type="text"
+             className="w-full text-xs border border-slate-300 rounded px-2 py-2"
+             value={fieldName}
+             onChange={(e) => setFieldName(e.target.value)}
+             placeholder="Contoh: Rincian Biaya"
+           />
+
+           <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+             <label className="block text-xs font-bold text-amber-800 mb-2 uppercase tracking-wider">Sisipkan Kolom Variabel</label>
+             <p className="text-[10px] text-amber-700 mb-3 leading-tight">Klik sel/kotak kosong di dalam tabel (di sebelah kiri), lalu klik tombol di bawah untuk menyisipkan variabel form.</p>
+             <div className="grid grid-cols-2 gap-2">
+               <button onClick={() => insertVariable && insertVariable('text')} className="bg-white border border-slate-200 rounded p-1.5 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:border-sky-300">Teks Singkat</button>
+               <button onClick={() => insertVariable && insertVariable('number')} className="bg-white border border-slate-200 rounded p-1.5 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:border-amber-300">Angka</button>
+               <button onClick={() => insertVariable && insertVariable('date')} className="bg-white border border-slate-200 rounded p-1.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:border-emerald-300">Tanggal</button>
+               <button onClick={() => insertVariable && insertVariable('dropdown')} className="bg-white border border-slate-200 rounded p-1.5 text-xs font-semibold text-slate-700 hover:bg-fuchsia-50 hover:border-fuchsia-300">Dropdown</button>
+               <button onClick={() => insertVariable && insertVariable('table_index')} className="col-span-2 bg-white border border-slate-200 rounded p-1.5 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:border-indigo-300">No. Urut (Otomatis)</button>
+             </div>
+           </div>
+         </div>
+       )}
+       
        <button 
          onClick={applyChanges}
-         className="w-full bg-indigo-600 text-white font-bold text-sm py-2 rounded hover:bg-indigo-700 transition-colors shadow-sm"
+         className="w-full bg-indigo-600 text-white font-bold text-sm py-2 rounded hover:bg-indigo-700 transition-colors shadow-sm mt-2"
        >
          Terapkan Perubahan
        </button>
@@ -187,7 +240,8 @@ export default function TemplateBuilderV2() {
           setEditingField({ attrs, updateAttributes });
         }
       }),
-      RepeaterBlockExtension
+      RepeaterBlockExtension,
+      PageBreakExtension
     ],
     content: '<p>Mulai mengetik template Anda di sini...</p>',
     editorProps: {
@@ -333,6 +387,31 @@ export default function TemplateBuilderV2() {
     const json = editor.getJSON();
     const vars = [];
     const traverse = (node) => {
+      if (node.type === 'table' && node.attrs && node.attrs.isRepeater) {
+        const tableCols = [];
+        const traverseChild = (childNode) => {
+          if (childNode.type === 'formField' && childNode.attrs) {
+            tableCols.push(childNode.attrs);
+          }
+          if (childNode.content) childNode.content.forEach(traverseChild);
+        };
+        if (node.content) node.content.forEach(traverseChild);
+        
+        if (!vars.find(v => v.fieldId === node.attrs.fieldId)) {
+          vars.push({
+            fieldType: 'table_loop',
+            fieldId: node.attrs.fieldId || `table_${Date.now()}`,
+            fieldName: node.attrs.fieldName || 'Tabel Dinamis',
+            tableColumns: tableCols.map(col => ({
+              id: col.fieldId,
+              label: col.fieldName,
+              width: 'auto'
+            }))
+          });
+        }
+        return;
+      }
+
       if (node.type === 'repeaterBlock' && node.attrs) {
         if (!vars.find(v => v.fieldId === node.attrs.fieldId)) {
           vars.push({
@@ -403,6 +482,31 @@ export default function TemplateBuilderV2() {
     const extractedVariables = [];
     
     const traverse = (node) => {
+      if (node.type === 'table' && node.attrs && node.attrs.isRepeater) {
+        const tableCols = [];
+        const traverseChild = (childNode) => {
+          if (childNode.type === 'formField' && childNode.attrs) {
+            tableCols.push(childNode.attrs);
+          }
+          if (childNode.content) childNode.content.forEach(traverseChild);
+        };
+        if (node.content) node.content.forEach(traverseChild);
+        
+        if (!extractedVariables.find(v => v.fieldId === node.attrs.fieldId)) {
+          extractedVariables.push({
+            fieldType: 'table_loop',
+            fieldId: node.attrs.fieldId || `table_${Date.now()}`,
+            fieldName: node.attrs.fieldName || 'Tabel Dinamis',
+            tableColumns: tableCols.map(col => ({
+              id: col.fieldId,
+              label: col.fieldName,
+              width: 'auto'
+            }))
+          });
+        }
+        return; // DO NOT TRAVERSE INSIDE normal flow
+      }
+
       if (node.type === 'repeaterBlock' && node.attrs) {
         if (!extractedVariables.find(v => v.fieldId === node.attrs.fieldId)) {
           extractedVariables.push({
@@ -556,6 +660,16 @@ export default function TemplateBuilderV2() {
             action={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run()} 
             isActive={isTableActive} 
           />
+
+          <div className="w-px h-5 bg-slate-300 mx-1"></div>
+
+          <button
+            onClick={() => editor.chain().focus().setPageBreak().run()}
+            className="flex items-center gap-1.5 px-2 py-1.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap"
+            title="Tambah Batas Halaman (Page Break)"
+          >
+            <FaCut className="text-slate-500" /> Page Break
+          </button>
           
           {isTableActive && (
             <div className="flex items-center gap-1 ml-2 bg-slate-200 p-1 rounded">
@@ -702,7 +816,7 @@ export default function TemplateBuilderV2() {
           }}
         >
           <div 
-            className="bg-white mx-auto shadow-md border border-slate-200 mb-10 flex flex-col text-slate-900 shrink-0"
+            className="a4-page-canvas mx-auto shadow-md border border-slate-200 mb-10 flex flex-col text-slate-900 shrink-0"
             style={{
               width: "794px",
               minHeight: "1123px",
@@ -897,8 +1011,13 @@ export default function TemplateBuilderV2() {
                     <span className="text-xs font-semibold text-slate-700 text-center">Buat desain tabel/layout sendiri untuk pegawai (Bisa loop atau tidak).</span>
                   </button>
 
+                  <button onClick={() => insertVariable('table_loop')} className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                    <div className="w-8 h-8 rounded bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">📊</div>
+                    <span className="text-xs font-semibold text-slate-700">Tabel Loop</span>
+                  </button>
+
                   <button onClick={() => insertVariable('list')} className="flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
-                    <div className="w-8 h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">≡</div>
+                    <div className="w-8 h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">📋</div>
                     <span className="text-xs font-semibold text-slate-700">List (Per Poin)</span>
                   </button>
                 </div>
@@ -932,6 +1051,8 @@ export default function TemplateBuilderV2() {
                     <option value="number">Angka</option>
                     <option value="date">Tanggal</option>
                     <option value="dropdown">Dropdown (Pilihan)</option>
+                    <option value="table_index">No. Urut (Untuk Tabel Dinamis)</option>
+                    <option value="table_loop">Tabel Dinamis (Legacy)</option>
                     <option value="list">List (Per Poin)</option>
                   </select>
                 </div>
@@ -962,6 +1083,68 @@ export default function TemplateBuilderV2() {
                       <option value="A">Huruf Besar (A., B., C.)</option>
                       <option value="dot">Bullet Point (•)</option>
                     </select>
+                  </div>
+                )}
+
+                {editingField.attrs.fieldType === 'table_loop' && (
+                  <div className="space-y-4 pt-4 border-t border-slate-200">
+                    <label className="block text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Pengaturan Kolom Tabel</label>
+                    
+                    <div className="space-y-2">
+                      {(editingField.attrs.tableColumns || []).map((col, idx) => (
+                        <div key={col.id} className="flex gap-2 items-center bg-slate-50 p-2 rounded border border-slate-200">
+                          <input 
+                            type="text" 
+                            value={col.label} 
+                            onChange={(e) => {
+                              const newCols = [...(editingField.attrs.tableColumns || [])];
+                              newCols[idx].label = e.target.value;
+                              handleUpdateField('tableColumns', newCols);
+                            }}
+                            className="flex-1 text-xs border border-slate-300 rounded px-2 py-1"
+                            placeholder="Nama Kolom"
+                          />
+                          <select 
+                            value={col.width || 'auto'}
+                            onChange={(e) => {
+                              const newCols = [...(editingField.attrs.tableColumns || [])];
+                              newCols[idx].width = e.target.value;
+                              handleUpdateField('tableColumns', newCols);
+                            }}
+                            className="text-xs border border-slate-300 rounded px-2 py-1 w-[70px]"
+                          >
+                            <option value="auto">Auto</option>
+                            <option value="10%">10%</option>
+                            <option value="20%">20%</option>
+                            <option value="30%">30%</option>
+                            <option value="40%">40%</option>
+                            <option value="50%">50%</option>
+                          </select>
+                          <button onClick={() => {
+                             const newCols = [...(editingField.attrs.tableColumns || [])];
+                             newCols.splice(idx, 1);
+                             handleUpdateField('tableColumns', newCols);
+                          }} className="text-rose-500 font-bold px-2 hover:bg-rose-100 rounded text-xs">x</button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button onClick={() => {
+                         const newCols = [...(editingField.attrs.tableColumns || [])];
+                         newCols.push({ id: `col_${Date.now()}`, label: `Kolom ${newCols.length + 1}`, width: 'auto' });
+                         handleUpdateField('tableColumns', newCols);
+                      }} className="flex-1 text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-1.5 rounded font-semibold">
+                         + Kolom Teks
+                      </button>
+                      <button onClick={() => {
+                         const newCols = [...(editingField.attrs.tableColumns || [])];
+                         newCols.push({ id: `no`, label: `No`, width: '10%' });
+                         handleUpdateField('tableColumns', newCols);
+                      }} className="flex-1 text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-1.5 rounded font-semibold">
+                         + Kolom No
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1053,7 +1236,7 @@ export default function TemplateBuilderV2() {
               isTableActive ? (
               <div className="animate-fadeIn">
                 <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">Properti Tabel</h3>
-                <TablePropsForm editor={editor} />
+                <TablePropsForm editor={editor} insertVariable={insertVariable} />
               </div>
               ) : (
                 <div className="text-center py-10 opacity-60 animate-fadeIn mt-8">

@@ -5,12 +5,15 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { CustomTable } from '../components/builder-v2/CustomTable';
+import CustomTableNodeView from '../components/builder-v2/CustomTableNodeView';
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { CustomTableCell } from '../components/builder-v2/CustomTableCell';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { PreviewFieldExtension, FormDataContext } from '../components/builder-v2/PreviewFieldExtension';
 import { RepeaterBlockExtension } from '../components/builder-v2/RepeaterBlockExtension';
+import { PageBreakExtension } from '../components/builder-v2/PageBreakExtension';
 import { FontSizeExtension } from '../components/builder-v2/FontSizeExtension';
 import { TabExtension } from '../components/builder-v2/TabExtension';
 import { IndentExtension } from '../components/builder-v2/IndentExtension';
@@ -45,14 +48,17 @@ export default function SuratWriterV2() {
       FontSizeExtension,
       TabExtension,
       IndentExtension,
-      CustomTable.configure({
-        resizable: true,
+      CustomTable.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CustomTableNodeView);
+        }
       }),
       TableRow,
       TableHeader,
       CustomTableCell,
       PreviewFieldExtension,
-      RepeaterBlockExtension
+      RepeaterBlockExtension,
+      PageBreakExtension
     ],
     content: template ? template.content : '',
     editable: false, 
@@ -296,6 +302,61 @@ export default function SuratWriterV2() {
                           </div>
                       )}
                     </div>
+                    ) : field.fieldType === 'table_loop' ? (
+                      <div className="space-y-3">
+                        <div className="border border-slate-200 rounded overflow-x-auto">
+                          <table className="w-full text-xs text-left bg-white">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                              <tr>
+                                 {(field.tableColumns || []).map(col => <th key={col.id} className="p-2 font-semibold text-slate-600 border-r border-slate-100">{col.label}</th>)}
+                                 <th className="p-2 w-10"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                               {(Array.isArray(formData[field.fieldId]) ? formData[field.fieldId] : []).map((row, rowIdx) => (
+                                 <tr key={rowIdx} className="border-b border-slate-100">
+                                    {(field.tableColumns || []).map(col => (
+                                      <td key={col.id} className="p-1 align-top border-r border-slate-100">
+                                        {col.id === 'no' ? (
+                                          <span className="p-1 block text-center text-slate-500 font-medium">{rowIdx + 1}</span>
+                                        ) : (
+                                          <textarea
+                                            value={row[col.id] || ''}
+                                            onChange={(e) => {
+                                              const newRows = [...(formData[field.fieldId] || [])];
+                                              newRows[rowIdx] = { ...newRows[rowIdx], [col.id]: e.target.value };
+                                              handleInputChange(field.fieldId, newRows);
+                                            }}
+                                            className="w-full border-0 focus:ring-1 focus:ring-indigo-500 px-2 py-1.5 min-h-[40px] text-xs resize-y bg-transparent"
+                                            placeholder="..."
+                                          />
+                                        )}
+                                      </td>
+                                    ))}
+                                    <td className="p-1 align-top text-center bg-rose-50/30">
+                                       <button type="button" onClick={() => {
+                                          const newRows = [...(formData[field.fieldId] || [])];
+                                          newRows.splice(rowIdx, 1);
+                                          handleInputChange(field.fieldId, newRows.length ? newRows : '');
+                                       }} className="text-rose-500 font-bold p-1 hover:bg-rose-100 rounded text-[10px]" title="Hapus Baris">X</button>
+                                    </td>
+                                 </tr>
+                               ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            const newRows = Array.isArray(formData[field.fieldId]) ? [...formData[field.fieldId]] : [];
+                            newRows.push({});
+                            handleInputChange(field.fieldId, newRows);
+                          }}
+                          className="w-full border border-dashed border-indigo-300 text-indigo-600 rounded-lg px-3 py-2 text-sm font-medium hover:bg-indigo-50 transition-colors flex items-center justify-center gap-1"
+                        >
+                          + Tambah Baris
+                        </button>
+                      </div>
                   ) : field.fieldType === 'list' ? (
                     <div className="space-y-2">
                       {Array.isArray(formData[field.fieldId]) && formData[field.fieldId].length > 0 && (
@@ -441,7 +502,7 @@ export default function SuratWriterV2() {
         {/* Right Panel: Live Document Preview */}
         <div className="w-full lg:w-2/3 bg-slate-200 rounded-xl p-4 sm:p-8 overflow-auto">
           <div 
-            className="bg-white mx-auto shadow-md flex flex-col text-slate-900 shrink-0"
+            className="a4-page-canvas mx-auto shadow-lg flex flex-col text-slate-900 shrink-0"
             style={{
               width: "794px",
               minHeight: "1123px",

@@ -126,3 +126,89 @@
   outline-offset: 1px;
 }
 
+
+/* --- Page Break Extension --- */
+.page-break-element {
+  margin: 3rem 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.page-break-element::before {
+  content: 'BATAS HALAMAN (PAGE BREAK)';
+  position: absolute;
+  background: #f8fafc;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+}
+.page-break-line {
+  width: 100%;
+  border-top: 2px dashed #cbd5e1;
+  margin: 0;
+}
+
+@media print {
+  .page-break-element {
+    break-after: page;
+    page-break-after: always;
+    height: 0;
+    margin: 0;
+    border: none;
+    visibility: hidden;
+  }
+  .page-break-element::before {
+    display: none;
+  }
+
+  /* Smart Pagination for printing */
+  .ProseMirror table, 
+  .ProseMirror tr, 
+  .ProseMirror td,
+  .ProseMirror div[data-type="repeater-block"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .ProseMirror p, 
+  .ProseMirror h1, 
+  .ProseMirror h2, 
+  .ProseMirror h3 {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+
+/* --- A4 Page Visual Divider --- */
+.a4-page-canvas {
+  background-color: #ffffff;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 1121px,
+    #94a3b8 1121px,
+    #94a3b8 1122px,
+    transparent 1122px,
+    transparent 1123px
+  );
+  background-size: 100% 1123px;
+  position: relative;
+}
+.a4-page-canvas::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 1123px
+  );
+}
+
