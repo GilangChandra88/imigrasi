@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import SplashScreen from './components/SplashScreen'
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
@@ -313,8 +314,11 @@ function AppContent() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <AuthProvider>
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
       <AppContent />
     </AuthProvider>
   );
