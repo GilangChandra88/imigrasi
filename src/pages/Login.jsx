@@ -42,30 +42,6 @@ export default function Login() {
       
       {/* Keyframes */}
       <style>{`
-        .hologram-float {
-          animation: float 4s ease-in-out infinite;
-          transform-style: preserve-3d;
-          perspective: 1000px;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotateX(10deg) rotateY(-5deg); filter: drop-shadow(0 0 15px rgba(99,102,241,0.4)); }
-          50% { transform: translateY(-15px) rotateX(15deg) rotateY(0deg); filter: drop-shadow(0 0 30px rgba(99,102,241,0.8)); }
-        }
-        .scanline {
-          width: 100%;
-          height: 3px;
-          background: rgba(99,102,241, 0.9);
-          position: absolute;
-          animation: scan 2s linear infinite;
-          box-shadow: 0 0 15px rgba(99,102,241, 1);
-          z-index: 50;
-        }
-        @keyframes scan {
-          0% { top: -10%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { top: 110%; opacity: 0; }
-        }
         .fade-in-up {
           animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -85,20 +61,11 @@ export default function Login() {
       {/* Core UI */}
       <div className="relative z-10 w-full max-w-md flex flex-col items-center">
         
-        {/* Hologram Animation (Now at the top for both mobile & desktop) */}
-        <div className="relative flex items-center justify-center mb-8 hologram-float scale-75 sm:scale-90">
-          <div className="absolute inset-[-10%] z-20 overflow-hidden rounded-2xl pointer-events-none">
-             <div className="scanline"></div>
-          </div>
-          <div className="relative bg-slate-900/60 backdrop-blur-md border-2 border-indigo-400/60 p-6 sm:p-8 rounded-3xl shadow-[0_0_40px_rgba(99,102,241,0.2)] flex flex-col items-center justify-center">
-             <FaLock className="text-indigo-400 text-6xl sm:text-7xl opacity-90 drop-shadow-[0_0_15px_rgba(99,102,241,0.8)]" />
-             <div className="w-16 sm:w-20 h-1.5 bg-indigo-400/50 mt-4 sm:mt-5 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-             <div className="w-10 sm:w-14 h-1.5 bg-indigo-400/50 mt-2 sm:mt-2.5 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-          </div>
-        </div>
-
         {/* Text Header */}
-        <div className="text-center mb-8 fade-in-up">
+        <div className="text-center mb-10 fade-in-up">
+           <div className="w-16 h-16 mx-auto bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] border border-indigo-500/30 mb-5">
+             <FaLock />
+           </div>
            <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-cyan-400 tracking-widest uppercase mb-2 drop-shadow-[0_0_15px_rgba(99,102,241,0.3)]">
              e-Persuratan
            </h1>
