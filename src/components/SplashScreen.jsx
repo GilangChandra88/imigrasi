@@ -1,95 +1,172 @@
 import React, { useState, useEffect } from 'react';
-import { FaGlobeAmericas, FaPlane } from 'react-icons/fa';
+import { FaStamp, FaFileSignature, FaLock } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 export default function SplashScreen({ onFinish }) {
-  const [progress, setProgress] = useState(0);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [stamped, setStamped] = useState(false);
+  
+  // Ambil data user dari AuthContext
+  const { currentUser, userData, loading } = useAuth();
 
   useEffect(() => {
-    // Animate progress bar
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + 2; // Increases by 2% every 30ms (approx 1.5 seconds to 100%)
-      });
-    }, 30);
+    // Jangan mulai animasi stempel jika masih loading auth
+    if (loading) return;
 
-    // Trigger fade out after progress completes
+    // Timing untuk stempel menghantam dokumen
+    const stampTimer = setTimeout(() => {
+      setStamped(true);
+    }, 1000);
+
+    // Memicu fade out layar
     const fadeOutTimer = setTimeout(() => {
       setIsFadingOut(true);
-    }, 1800);
+    }, 2800);
 
-    // Unmount component
+    // Menghapus komponen
     const finishTimer = setTimeout(() => {
       onFinish();
-    }, 2300); // 500ms for fade out transition
+    }, 3300);
 
     return () => {
-      clearInterval(progressInterval);
+      clearTimeout(stampTimer);
       clearTimeout(fadeOutTimer);
       clearTimeout(finishTimer);
     };
-  }, [onFinish]);
+  }, [onFinish, loading]);
+
+  const userName = userData?.nama || currentUser?.email?.split('@')[0] || '';
 
   return (
-    <div 
-      className={`fixed inset-0 z-[9999] bg-[#0f172a] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ease-in-out ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}
-    >
-      {/* Decorative Blur Background */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-30">
-        <div className="w-[30rem] h-[30rem] bg-blue-600 rounded-full blur-[120px] animate-pulse"></div>
-      </div>
+    <div className={`fixed inset-0 z-[9999] bg-[#020617] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ease-in-out ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}>
       
-      {/* Animation Container */}
-      <div className="relative z-10 flex flex-col items-center">
+      {/* Definisi Keyframes */}
+      <style>{`
+        .hologram-float {
+          animation: float 4s ease-in-out infinite;
+          transform-style: preserve-3d;
+          perspective: 1000px;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotateX(15deg) rotateY(-15deg); filter: drop-shadow(0 0 15px rgba(34,211,238,0.4)); }
+          50% { transform: translateY(-20px) rotateX(25deg) rotateY(-5deg); filter: drop-shadow(0 0 30px rgba(34,211,238,0.8)); }
+        }
         
-        {/* Globe and Plane Animation */}
-        <div className="relative w-32 h-32 flex items-center justify-center mb-8">
-          {/* Globe rotating slowly */}
-          <div className="absolute inset-0 flex items-center justify-center text-blue-500/80 animate-[spin_8s_linear_infinite]">
-            <FaGlobeAmericas size={80} />
-          </div>
+        .stamp-strike {
+          animation: strike 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes strike {
+          0% { transform: translateY(-150px) scale(2.5) rotate(20deg); opacity: 0; }
+          50% { transform: translateY(-150px) scale(2.5) rotate(20deg); opacity: 0; }
+          85% { transform: translateY(15px) scale(0.9) rotate(-10deg); opacity: 1; }
+          100% { transform: translateY(0) scale(1) rotate(-5deg); opacity: 1; }
+        }
+        
+        .shockwave {
+          animation: ripple 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+        }
+        @keyframes ripple {
+          0% { transform: scale(0.5); opacity: 1; border-width: 8px; }
+          100% { transform: scale(3.5); opacity: 0; border-width: 1px; }
+        }
+        
+        .scanline {
+          width: 100%;
+          height: 3px;
+          background: rgba(34,211,238, 0.9);
+          position: absolute;
+          animation: scan 2s linear infinite;
+          box-shadow: 0 0 15px rgba(34,211,238, 1);
+          z-index: 50;
+        }
+        @keyframes scan {
+          0% { top: -10%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 110%; opacity: 0; }
+        }
+      `}</style>
+
+      {/* Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(30,41,59,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(30,41,59,0.5)_1px,transparent_1px)] bg-[length:40px_40px] opacity-30"></div>
+      
+      <div className="absolute inset-0 flex items-center justify-center opacity-40">
+        <div className={`w-[30rem] h-[30rem] rounded-full blur-[150px] animate-pulse ${currentUser ? 'bg-cyan-900' : 'bg-indigo-900'}`}></div>
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center justify-center mt-[-40px]">
+        
+        {/* Dokumen Hologram */}
+        <div className="relative flex items-center justify-center mb-16 hologram-float">
           
-          {/* Plane flying around the globe */}
-          <div className="absolute inset-0 animate-[spin_3s_linear_infinite]">
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 flex items-center justify-center">
-              {/* Plane Trail (trailing leftwards) */}
-              <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-white/70 blur-[1px] rounded-full mr-[-4px]"></div>
-              
-              {/* Plane (rotated 45deg to point completely to the right) */}
-              <div className="text-white transform rotate-45 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] z-10">
-                <FaPlane size={24} />
-              </div>
-            </div>
+          <div className="absolute inset-[-10%] z-20 overflow-hidden rounded-2xl pointer-events-none">
+             <div className="scanline"></div>
           </div>
+
+          <div className={`relative bg-slate-900/60 backdrop-blur-md border-2 p-8 rounded-3xl flex flex-col items-center justify-center transform transition-colors duration-1000 ${stamped ? (currentUser ? 'border-cyan-400/60 shadow-[0_0_40px_rgba(34,211,238,0.2)]' : 'border-indigo-400/60 shadow-[0_0_40px_rgba(99,102,241,0.2)]') : 'border-slate-500/50 shadow-none'}`}>
+             {stamped && !currentUser ? (
+               <FaLock className="text-indigo-400 text-7xl opacity-90 drop-shadow-[0_0_15px_rgba(99,102,241,0.8)]" />
+             ) : (
+               <FaFileSignature className="text-cyan-400 text-7xl opacity-90 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
+             )}
+             <div className={`w-20 h-1.5 mt-5 rounded-full ${stamped && !currentUser ? 'bg-indigo-400/50 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}></div>
+             <div className={`w-14 h-1.5 mt-2.5 rounded-full ${stamped && !currentUser ? 'bg-indigo-400/50 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}></div>
+          </div>
+
+          {/* Stempel hanya muncul jika sudah login */}
+          {currentUser && (
+            <div className="absolute top-[-20px] right-[-50px] z-30 stamp-strike">
+              <FaStamp className="text-rose-500 text-7xl drop-shadow-[0_0_20px_rgba(244,63,94,0.7)]" />
+            </div>
+          )}
+
+          {/* Efek Gelombang Kejut */}
+          {stamped && currentUser && (
+            <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
+              <div className="w-48 h-48 border-rose-500 rounded-full shockwave absolute"></div>
+              <div className="w-48 h-48 border-rose-400 rounded-full shockwave absolute" style={{ animationDelay: '0.1s' }}></div>
+            </div>
+          )}
+          {stamped && !currentUser && (
+             <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
+              <div className="w-48 h-48 border-indigo-500 rounded-full shockwave absolute"></div>
+            </div>
+          )}
         </div>
 
-        {/* Text */}
-        <div className="flex flex-col items-center transform transition-all duration-1000 translate-y-0 opacity-100">
-           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-widest uppercase mb-3 drop-shadow-md">
+        {/* Teks Animasi */}
+        <div className="flex flex-col items-center text-center">
+           <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 to-blue-600 tracking-widest uppercase mb-4 drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]">
              e-Persuratan
            </h1>
-           <p className="text-blue-400 text-xs sm:text-sm tracking-[0.25em] uppercase font-semibold">
-             Kantor Imigrasi Buleleng
-           </p>
+           
+           <div className="h-12 flex flex-col items-center justify-center">
+             {loading ? (
+               <p className="text-cyan-500 font-bold text-sm tracking-[0.4em] uppercase opacity-80 animate-pulse">
+                 Memuat Sistem...
+               </p>
+             ) : stamped ? (
+               currentUser ? (
+                 <>
+                   <p className="text-rose-400 font-bold text-base tracking-[0.4em] uppercase animate-[pulse_0.5s_ease-in-out_infinite] drop-shadow-[0_0_8px_rgba(244,63,94,0.9)] mb-1">
+                     TERVERIFIKASI
+                   </p>
+                   <p className="text-slate-300 text-xs tracking-widest uppercase font-semibold">
+                     SELAMAT DATANG, {userName}
+                   </p>
+                 </>
+               ) : (
+                 <p className="text-indigo-400 font-bold text-sm tracking-[0.3em] uppercase drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">
+                   AUTENTIKASI DIPERLUKAN
+                 </p>
+               )
+             ) : (
+               <p className="text-cyan-500 font-bold text-sm tracking-[0.4em] uppercase opacity-80 animate-pulse">
+                 Memindai Data...
+               </p>
+             )}
+           </div>
         </div>
-        
-        {/* Loading Bar */}
-        <div className="w-56 h-1.5 bg-slate-800 rounded-full mt-12 overflow-hidden relative shadow-inner">
-          <div 
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-400 rounded-full transition-all ease-out"
-            style={{ width: `${progress}%`, transitionDuration: '30ms' }}
-          >
-            {/* Glow effect on the tip of the progress bar */}
-            <div className="absolute right-0 top-0 bottom-0 w-2 bg-white blur-[2px] opacity-80"></div>
-          </div>
-        </div>
-        <p className="text-slate-500 text-[10px] mt-3 font-medium uppercase tracking-wider animate-pulse">
-          Memuat Sistem...
-        </p>
 
       </div>
     </div>
