@@ -91,7 +91,7 @@ export default function SplashScreen({ onFinish }) {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(30,41,59,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(30,41,59,0.5)_1px,transparent_1px)] bg-[length:40px_40px] opacity-30"></div>
       
       <div className="absolute inset-0 flex items-center justify-center opacity-40">
-        <div className={`w-[30rem] h-[30rem] rounded-full blur-[150px] animate-pulse ${currentUser ? 'bg-cyan-900' : 'bg-indigo-900'}`}></div>
+        <div className={`w-[30rem] h-[30rem] rounded-full blur-[150px] animate-pulse ${currentUser ? 'bg-emerald-900/50' : 'bg-rose-900/40'}`}></div>
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center mt-[-40px]">
@@ -103,33 +103,33 @@ export default function SplashScreen({ onFinish }) {
              <div className="scanline"></div>
           </div>
 
-          <div className={`relative bg-slate-900/60 backdrop-blur-md border-2 p-8 rounded-3xl flex flex-col items-center justify-center transform transition-colors duration-1000 ${stamped ? (currentUser ? 'border-cyan-400/60 shadow-[0_0_40px_rgba(34,211,238,0.2)]' : 'border-indigo-400/60 shadow-[0_0_40px_rgba(99,102,241,0.2)]') : 'border-slate-500/50 shadow-none'}`}>
+          <div className={`relative bg-slate-900/60 backdrop-blur-md border-2 p-8 rounded-3xl flex flex-col items-center justify-center transform transition-colors duration-1000 ${stamped ? (currentUser ? 'border-emerald-400/60 shadow-[0_0_40px_rgba(16,185,129,0.2)]' : 'border-rose-500/60 shadow-[0_0_40px_rgba(244,63,94,0.2)]') : 'border-slate-500/50 shadow-none'}`}>
              {stamped && !currentUser ? (
-               <FaLock className="text-indigo-400 text-7xl opacity-90 drop-shadow-[0_0_15px_rgba(99,102,241,0.8)]" />
+               <FaLock className="text-rose-500 text-7xl opacity-90 drop-shadow-[0_0_15px_rgba(244,63,94,0.8)]" />
              ) : (
                <FaFileSignature className="text-cyan-400 text-7xl opacity-90 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
              )}
-             <div className={`w-20 h-1.5 mt-5 rounded-full ${stamped && !currentUser ? 'bg-indigo-400/50 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}></div>
-             <div className={`w-14 h-1.5 mt-2.5 rounded-full ${stamped && !currentUser ? 'bg-indigo-400/50 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}></div>
+             <div className={`w-20 h-1.5 mt-5 rounded-full ${stamped && !currentUser ? 'bg-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}></div>
+             <div className={`w-14 h-1.5 mt-2.5 rounded-full ${stamped && !currentUser ? 'bg-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}></div>
           </div>
 
           {/* Stempel hanya muncul jika sudah login */}
           {currentUser && (
             <div className="absolute top-[-20px] right-[-50px] z-30 stamp-strike">
-              <FaStamp className="text-rose-500 text-7xl drop-shadow-[0_0_20px_rgba(244,63,94,0.7)]" />
+              <FaStamp className="text-emerald-500 text-7xl drop-shadow-[0_0_20px_rgba(16,185,129,0.7)]" />
             </div>
           )}
 
           {/* Efek Gelombang Kejut */}
           {stamped && currentUser && (
             <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-              <div className="w-48 h-48 border-rose-500 rounded-full shockwave absolute"></div>
-              <div className="w-48 h-48 border-rose-400 rounded-full shockwave absolute" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-48 h-48 border-emerald-500 rounded-full shockwave absolute"></div>
+              <div className="w-48 h-48 border-emerald-400 rounded-full shockwave absolute" style={{ animationDelay: '0.1s' }}></div>
             </div>
           )}
           {stamped && !currentUser && (
              <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-              <div className="w-48 h-48 border-indigo-500 rounded-full shockwave absolute"></div>
+              <div className="w-48 h-48 border-rose-500 rounded-full shockwave absolute"></div>
             </div>
           )}
         </div>
@@ -148,7 +148,7 @@ export default function SplashScreen({ onFinish }) {
              ) : stamped ? (
                currentUser ? (
                  <>
-                   <p className="text-rose-400 font-bold text-base tracking-[0.4em] uppercase animate-[pulse_0.5s_ease-in-out_infinite] drop-shadow-[0_0_8px_rgba(244,63,94,0.9)] mb-1">
+                   <p className="text-emerald-400 font-bold text-base tracking-[0.4em] uppercase animate-[pulse_0.5s_ease-in-out_infinite] drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] mb-1">
                      TERVERIFIKASI
                    </p>
                    <p className="text-slate-300 text-xs tracking-widest uppercase font-semibold">
@@ -156,7 +156,7 @@ export default function SplashScreen({ onFinish }) {
                    </p>
                  </>
                ) : (
-                 <p className="text-indigo-400 font-bold text-sm tracking-[0.3em] uppercase drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">
+                 <p className="text-rose-500 font-bold text-sm tracking-[0.3em] uppercase drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]">
                    AUTENTIKASI DIPERLUKAN
                  </p>
                )
