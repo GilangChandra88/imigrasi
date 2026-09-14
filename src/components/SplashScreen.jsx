@@ -54,12 +54,16 @@ export default function SplashScreen({ onFinish }) {
           </div>
           
           {/* Plane flying around the globe */}
-          <div className="absolute inset-0 animate-[spin_2s_linear_infinite]">
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-white transform rotate-[90deg] drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-              <FaPlane size={28} />
+          <div className="absolute inset-0 animate-[spin_3s_linear_infinite]">
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 flex items-center justify-center">
+              {/* Plane Trail (trailing leftwards) */}
+              <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-white/70 blur-[1px] rounded-full mr-[-4px]"></div>
+              
+              {/* Plane (rotated 45deg to point completely to the right) */}
+              <div className="text-white transform rotate-45 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] z-10">
+                <FaPlane size={24} />
+              </div>
             </div>
-            {/* Plane Trail */}
-            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[2px] h-12 bg-gradient-to-t from-transparent to-white/50 blur-[1px]"></div>
           </div>
         </div>
 
