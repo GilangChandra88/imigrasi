@@ -29,6 +29,7 @@ export default function Login() {
         await signInWithEmailAndPassword(auth, email, password);
       }
       navigate('/');
+      window.dispatchEvent(new Event('triggerSplash'));
     } catch (err) {
       console.error(err);
       setError('Email atau password salah.');

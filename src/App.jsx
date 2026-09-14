@@ -316,6 +316,12 @@ function AppContent() {
 function App() {
   const [showSplash, setShowSplash] = useState(true);
 
+  useEffect(() => {
+    const handleTrigger = () => setShowSplash(true);
+    window.addEventListener('triggerSplash', handleTrigger);
+    return () => window.removeEventListener('triggerSplash', handleTrigger);
+  }, []);
+
   return (
     <AuthProvider>
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
