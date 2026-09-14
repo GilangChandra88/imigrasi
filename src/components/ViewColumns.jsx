@@ -19,6 +19,7 @@ const TYPE_COLORS = {
   "Kode surat 1": "text-emerald-600 bg-emerald-50 border-emerald-200",
   "Kode surat 2": "text-amber-600 bg-amber-50 border-amber-200",
   "Kode surat 3": "text-orange-600 bg-orange-50 border-orange-200",
+  "Item": "text-teal-600 bg-teal-50 border-teal-200",
 };
 
 export default function ViewColumns({ nodes, hierarchy, onAdd, onDelete, onEdit, focusedPath }) {
@@ -92,17 +93,23 @@ function Column({ column, selectedId, onSelect, onAdd, onDelete, onEdit }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newKode, setNewKode] = useState("");
   const [newItemName, setNewItemName] = useState("");
+  const [newPagu, setNewPagu] = useState(0);
+  const [newLockPagu, setNewLockPagu] = useState(0);
 
   const [editingNodeId, setEditingNodeId] = useState(null);
   const [editKode, setEditKode] = useState("");
   const [editName, setEditName] = useState("");
+  const [editPagu, setEditPagu] = useState(0);
+  const [editLockPagu, setEditLockPagu] = useState(0);
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
-    await onAdd(newKode.trim(), newItemName.trim(), column.type, column.parentId);
+    await onAdd(newKode.trim(), newItemName.trim(), column.type, column.parentId, Number(newPagu) || 0, Number(newLockPagu) || 0);
     setNewKode("");
     setNewItemName("");
+    setNewPagu(0);
+    setNewLockPagu(0);
     setIsAdding(false);
   };
 
@@ -111,13 +118,15 @@ function Column({ column, selectedId, onSelect, onAdd, onDelete, onEdit }) {
     setEditingNodeId(node.id);
     setEditKode(node.kode || "");
     setEditName(node.name || "");
+    setEditPagu(node.pagu || 0);
+    setEditLockPagu(node.lockPagu || 0);
   };
 
   const handleEditSubmit = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
     if (!editName.trim()) return;
-    await onEdit(id, editKode.trim(), editName.trim());
+    await onEdit(id, editKode.trim(), editName.trim(), Number(editPagu) || 0, Number(editLockPagu) || 0);
     setEditingNodeId(null);
   };
 
@@ -177,6 +186,20 @@ function Column({ column, selectedId, onSelect, onAdd, onDelete, onEdit }) {
                         placeholder="Keterangan..."
                         className="w-full p-1.5 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
                       />
+                      <input
+                        type="number"
+                        value={editPagu}
+                        onChange={(e) => setEditPagu(e.target.value)}
+                        placeholder="Pagu"
+                        className="w-full text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700 text-right"
+                      />
+                      <input
+                        type="number"
+                        value={editLockPagu}
+                        onChange={(e) => setEditLockPagu(e.target.value)}
+                        placeholder="Lock Pagu"
+                        className="w-full text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 text-right"
+                      />
                       <div className="flex gap-2 mt-1">
                         <button type="submit" className="flex-1 bg-indigo-600 text-white text-xs py-1.5 rounded-md hover:bg-indigo-700">Simpan</button>
                         <button type="button" onClick={() => setEditingNodeId(null)} className="flex-1 bg-slate-200 text-slate-600 text-xs py-1.5 rounded-md hover:bg-slate-300">Batal</button>
@@ -189,6 +212,11 @@ function Column({ column, selectedId, onSelect, onAdd, onDelete, onEdit }) {
                           {node.kode ? <strong className="font-bold block text-xs text-slate-500 mb-0.5">{node.kode}</strong> : null}
                           <span className={`font-medium ${node.kode ? 'line-clamp-2' : ''}`}>{node.name}</span>
                         </p>
+                        {node.pagu > 0 && (
+                          <span className="text-[9px] font-semibold text-emerald-600 block mt-0.5">
+                            Rp {new Intl.NumberFormat('id-ID').format(node.pagu)}
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center">
@@ -246,6 +274,22 @@ function Column({ column, selectedId, onSelect, onAdd, onDelete, onEdit }) {
                 onChange={(e) => setNewItemName(e.target.value)}
                 placeholder={`Keterangan ${column.type}...`}
                 className="w-2/3 p-2 text-sm border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              />
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={newPagu}
+                onChange={(e) => setNewPagu(e.target.value)}
+                placeholder="Pagu"
+                className="w-1/2 p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-right"
+              />
+              <input
+                type="number"
+                value={newLockPagu}
+                onChange={(e) => setNewLockPagu(e.target.value)}
+                placeholder="Lock Pagu"
+                className="w-1/2 p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white text-right"
               />
             </div>
             <div className="flex gap-2">

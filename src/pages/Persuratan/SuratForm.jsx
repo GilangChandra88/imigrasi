@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaChevronLeft, FaSave, FaPrint, FaCheckCircle, FaSpinner, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaChevronLeft, FaSave, FaPrint, FaCheckCircle, FaSpinner, FaSearch, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { SURAT_REGISTRY } from '../../surat';
 import { db } from '../../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, getDoc, runTransaction, query, where } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, getDoc, runTransaction, query, where, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { syncSPDItems, syncOtherSPDsData } from '../LPJ/useLPJ';
 import SuratPreviewModal from './SuratPreviewModal';
@@ -18,14 +18,23 @@ export default function SuratForm() {
   const queryParams = new URLSearchParams(location.search);
   const packId = queryParams.get('packId');
   const itemId = queryParams.get('itemId');
+
+  const found = SURAT_REGISTRY.find(s => s.id === suratId);
   
-  const [surat, setSurat] = useState(null);
+  const isSpbyHub = suratId === 'spby';
+  const isPhase2Child = [
+    'nota-dinas', 'surat-perintah-bayar', 'rincian-spby', 
+    'rincian-perjalanan-tugas', 'sptjm-pelaksana', 'nominatif', 'kwitansi'
+  ].includes(suratId);
+
+  const [surat, setSurat] = useState(found || null);
   const [formData, setFormData] = useState({});
   const [pegawaiDB, setPegawaiDB] = useState([]);
   const [makDB, setMakDB] = useState([]);
   const [nomorSuratDB, setNomorSuratDB] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(!isSpbyHub);
   const [savedInstance, setSavedInstance] = useState(null);
   const [missingFieldInfo, setMissingFieldInfo] = useState(null);
 
@@ -43,7 +52,7 @@ export default function SuratForm() {
       const initial = {};
       found.variables?.forEach((v) => {
         if (v.source !== 'auto') {
-          if (v.type === 'pegawai_multi') {
+          if (v.type === 'pegawai_multi' || v.type === 'detail_transaksi') {
             initial[v.key] = [];
           } else if (v.type === 'dynamic_list') {
             initial[v.key] = ['']; // Array string kosong pertama
@@ -82,6 +91,51 @@ export default function SuratForm() {
               }
             }
           }
+
+          // SPBY sync: Inherit MAK from SPD, and pegawai_list from SP
+          if (found.id === 'spby') {
+            const itemsRef = collection(db, 'lpj_packs', packId, 'surat_items');
+            
+            // 1. Dapatkan daftar pegawai dari SP
+            const spQuery = query(itemsRef, where('kode', '==', 'SP'));
+            const spSnap = await getDocs(spQuery);
+            if (!spSnap.empty) {
+              const spData = spSnap.docs[0].data();
+              if (spData.data) {
+                if (!savedData) savedData = {};
+                savedData.pegawai_list = spData.data.pegawai_list || [];
+              }
+            }
+
+            // 2. Dapatkan Pembebanan Anggaran (MAK/Akun) dari SPD
+            const spdQuery = query(itemsRef, where('kode', '==', 'SPD'));
+            const spdSnap = await getDocs(spdQuery);
+            if (!spdSnap.empty) {
+              const spdData = spdSnap.docs[0].data();
+              if (spdData.data && spdData.data.akun) {
+                if (!savedData) savedData = {};
+                if (!savedData.mak) savedData.mak = spdData.data.akun;
+              }
+            }
+          }
+
+          // Phase 2 Child sync: Inherit all fields from SPBY dynamically
+          if (
+            ['nota-dinas', 'surat-perintah-bayar', 'rincian-spby', 
+             'rincian-perjalanan-tugas', 'sptjm-pelaksana', 'nominatif', 'kwitansi'
+            ].includes(found.id)
+          ) {
+            const itemsRef = collection(db, 'lpj_packs', packId, 'surat_items');
+            const spbyQuery = query(itemsRef, where('kode', '==', 'SPBY'));
+            const spbySnap = await getDocs(spbyQuery);
+            if (!spbySnap.empty) {
+              const spbyData = spbySnap.docs[0].data();
+              if (spbyData.data) {
+                if (!savedData) savedData = {};
+                Object.assign(savedData, spbyData.data);
+              }
+            }
+          }
         } catch (err) {
           console.error("Gagal memuat data sebelumnya:", err);
         }
@@ -104,6 +158,16 @@ export default function SuratForm() {
           if ('ppk' in finalData && !finalData.ppk) {
             const ppk = pDB.find(p => p.status_khusus === 'PPK');
             if (ppk) finalData.ppk = formatPegawai(ppk);
+          }
+          if ('pejabat_ppk' in finalData && !finalData.pejabat_ppk) {
+            const ppk = pDB.find(p => p.status_khusus === 'PPK');
+            if (ppk) finalData.pejabat_ppk = formatPegawai(ppk);
+          }
+          
+          // Autofill Bendahara
+          if ('bendahara' in finalData && !finalData.bendahara) {
+            const bendahara = pDB.find(p => p.status_khusus === 'Bendahara Pengeluaran' || (p.status_khusus || '').toLowerCase().includes('bendahara'));
+            if (bendahara) finalData.bendahara = formatPegawai(bendahara);
           }
 
           // Autofill assigned employee for this SPD if key exists and is empty
@@ -147,7 +211,6 @@ export default function SuratForm() {
   }, [suratId, navigate, packId, itemId]);
 
   // Auto-Save Effect (Debounced 1.5 detik)
-  const [isSaving, setIsSaving] = useState(false);
   useEffect(() => {
     if (!packId || !itemId || !surat) return;
     if (Object.keys(formData).length === 0) return;
@@ -163,13 +226,66 @@ export default function SuratForm() {
         data: formData,
         is_data_complete: isComplete,
         updated_at: serverTimestamp()
-      }).then(() => {
+      }).then(async () => {
         setIsSaving(false);
         // Sync SPD dinamik jika ini form SP (surat-perintah)
         if (surat.id === 'surat-perintah' && formData.pegawai_list) {
           syncSPDItems(packId, formData).catch(err => console.error("Gagal sync SPD:", err));
         } else if (surat.id === 'surat-perjalanan-dinas') {
           syncOtherSPDsData(packId, itemId, formData, isComplete).catch(err => console.error("Gagal sync data SPD lain:", err));
+        }
+
+        // Record MAK_History when SPBY is saved
+        if (surat.id === 'spby' && Array.isArray(formData.detail_transaksi)) {
+          try {
+            const historyCollection = collection(db, "MAK_History");
+            
+            // Clear previous history entries for this surat item
+            const prevQuery = query(historyCollection, 
+              where("suratRef.packId", "==", packId),
+              where("suratRef.suratItemId", "==", itemId)
+            );
+            const prevSnap = await getDocs(prevQuery);
+            for (const prevDoc of prevSnap.docs) {
+              await deleteDoc(prevDoc.ref);
+            }
+
+            // Record each detail_transaksi row that has an itemNodeId
+            for (const row of formData.detail_transaksi) {
+              if (row.itemNodeId && row.jumlah) {
+                const jumlah = Number(String(row.jumlah).replace(/[^0-9]/g, '')) || 0;
+                if (jumlah <= 0) continue;
+
+                const tanggal = formData.tanggal_spby || new Date().toISOString().split('T')[0];
+                const dateObj = new Date(tanggal);
+                
+                await addDoc(historyCollection, {
+                  makNodeId: row.itemNodeId,
+                  akunNodeId: row.akunNodeId || '',
+                  tahunNodeId: row.tahunNodeId || '',
+                  makString: formData.mak || '',
+                  itemKode: row.itemKode || '',
+                  itemName: row.itemName || row.detail || '',
+                  jumlah: jumlah,
+                  tanggal: tanggal,
+                  bulan: dateObj.getMonth() + 1,
+                  tahun: dateObj.getFullYear(),
+                  suratRef: {
+                    packId: packId,
+                    suratItemId: itemId,
+                    kode: 'SPBY',
+                    pegawai: row.pegawai || ''
+                  },
+                  uraian: row.uraian || '',
+                  createdAt: new Date().toISOString(),
+                  createdBy: currentUser?.uid || '',
+                  status: 'active'
+                });
+              }
+            }
+          } catch (err) {
+            console.error("Gagal record MAK_History:", err);
+          }
         }
       }).catch((err) => {
         console.error("Autosave gagal", err);
@@ -249,11 +365,6 @@ export default function SuratForm() {
     }
   };
 
-  const previewSuratObj = {
-    ...surat,
-    instanceData: formData
-  };
-
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
       
@@ -318,15 +429,31 @@ export default function SuratForm() {
           </div>
         </div>
         
+        {/* Actions */}
         <div className="flex items-center gap-3">
-          {packId && (
-            <span className="text-xs font-medium text-slate-400 mr-2 flex items-center gap-1">
-              {isSaving ? (
-                <><FaSpinner className="animate-spin" /> Menyimpan...</>
-              ) : (
-                <><FaCheckCircle className="text-emerald-500" /> Tersimpan otomatis</>
-              )}
+          {isSaving && (
+            <span className="flex items-center gap-2 text-sm font-semibold text-slate-500 mr-2 animate-pulse">
+              <FaSpinner className="animate-spin" /> Menyimpan...
             </span>
+          )}
+          {savedInstance && (
+            <span className="flex items-center gap-2 text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 mr-2">
+              <FaCheckCircle /> Tersimpan
+            </span>
+          )}
+
+          {!isSpbyHub && !isPhase2Child && (
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              title="Toggle Live Preview"
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-bold border rounded-lg transition-colors shadow-sm ${
+                showPreview
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              {showPreview ? <><FaEyeSlash /> Sembunyikan PDF</> : <><FaEye /> Tampilkan PDF</>}
+            </button>
           )}
 
           <button 
@@ -359,16 +486,26 @@ export default function SuratForm() {
       </div>
 
       {/* 2-Pane Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden bg-slate-50 relative">
         
-        {/* Kiri: Live Preview */}
-        <div className="flex-1 bg-slate-300 overflow-auto relative shadow-inner print:absolute print:inset-0 print:bg-white print:overflow-visible print:shadow-none">
-          <SuratPreviewCanvas surat={surat} formData={formData} />
-        </div>
+        {/* Kiri: Live Preview (Sliding Left) */}
+        {!isSpbyHub && (
+          <div 
+            className={`bg-slate-300 relative shadow-inner print:absolute print:inset-0 print:bg-white print:overflow-visible print:shadow-none transition-all duration-300 ease-in-out ${
+              showPreview ? 'flex-1 opacity-100 overflow-auto' : 'w-0 opacity-0 overflow-hidden'
+            }`}
+          >
+            {/* Wrapper min-width agar PDF tidak terkompresi saat animasi slide */}
+            <div className="h-full min-w-[500px]">
+              <SuratPreviewCanvas surat={surat} formData={formData} />
+            </div>
+          </div>
+        )}
 
         {/* Kanan: Form */}
-        <div className="w-[450px] bg-white border-l border-slate-200 overflow-y-auto flex flex-col z-10 shrink-0 print:hidden">
-          <div className="p-6">
+        {!isPhase2Child && (
+          <div className={`${showPreview ? 'w-[450px]' : 'flex-1'} bg-white border-l border-slate-200 overflow-y-auto flex flex-col z-10 shrink-0 print:hidden transition-all duration-300 ease-in-out`}>
+            <div className={`p-6 w-full ${showPreview ? '' : 'lg:px-12'}`}>
             {savedInstance ? (
               <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 flex flex-col items-center text-center">
                 <FaCheckCircle className="text-emerald-500 text-5xl mb-4" />
@@ -385,16 +522,16 @@ export default function SuratForm() {
                 <h2 className="text-sm font-bold text-slate-800 mb-6 border-b border-slate-100 pb-3">
                   Lengkapi Form Isian
                 </h2>
-                
+
                 <div className="space-y-5">
                   {surat.variables?.map((v) => {
-                    if (v.source === 'auto') return null;
+                if (v.source === 'auto') return null;
 
-                    return (
-                      <div key={v.key}>
-                        <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                          {v.label} {v.required && <span className="text-rose-500">*</span>}
-                        </label>
+                return (
+                  <div key={v.key}>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                      {v.label} {v.required && <span className="text-rose-500">*</span>}
+                    </label>
                         
                         {v.type === 'text' && (
                           <input
@@ -517,9 +654,23 @@ export default function SuratForm() {
                         <MakSearch
                           makDB={makDB}
                           value={formData[v.key]}
-                          onChange={(val) => setFormData({ ...formData, [v.key]: val })}
+                          onChange={(val, meta) => setFormData({ ...formData, [v.key]: val, ...(meta || {}) })}
                           placeholder={`Cari ${v.label.toLowerCase()}...`}
                           disabled={v.readonly}
+                        />
+                      )}
+
+                      {v.type === 'detail_transaksi' && (
+                        <DetailTransaksi
+                          value={formData[v.key]}
+                          onChange={(val) => setFormData({ ...formData, [v.key]: val })}
+                          pegawaiList={formData.pegawai_list || []}
+                          disabled={v.readonly}
+                          isSaved={!!savedInstance}
+                          makDB={makDB}
+                          akunNodeId={formData._akunNodeId || ''}
+                          tahunNodeId={formData._tahunNodeId || ''}
+                          makString={formData.mak || ''}
                         />
                       )}
 
@@ -539,16 +690,10 @@ export default function SuratForm() {
               </div>
             </div>
           )}
+          </div>
         </div>
+        )}
       </div>
-    </div>
-
-      {showPreview && (
-        <SuratPreviewModal 
-          surat={previewSuratObj} 
-          onClose={() => setShowPreview(false)} 
-        />
-      )}
     </div>
   );
 }
@@ -700,7 +845,9 @@ function MakSearch({ makDB, value, onChange, placeholder, disabled }) {
           if (curr.kode) parts.unshift(curr.kode);
           curr = makDB.find(n => n.id === curr.parentId);
         }
-        onChange(parts.join(' '));
+        // Find tahun node (root)
+        const tahunNodeId = newSelections[0] || null;
+        onChange(parts.join(' '), { _akunNodeId: nodeId, _tahunNodeId: tahunNodeId });
       }
     }
   };
@@ -941,3 +1088,276 @@ function NomorSuratSearch({ nomorSuratDB, value, onChange, disabled, formData })
     </div>
   );
 }
+
+// --- Sub Komponen: Detail Transaksi ----------------------------------
+function DetailTransaksi({ value, onChange, pegawaiList, disabled, isSaved, makDB, akunNodeId, tahunNodeId, makString }) {
+  const [rows, setRows] = useState(Array.isArray(value) && value.length > 0 ? value : []);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Auto-resolve akunNodeId from makString if missing (because SPBY inherits mak as string from SPD)
+  const resolvedAkunNodeId = useMemo(() => {
+    if (akunNodeId) return akunNodeId;
+    if (makString && makDB && makDB.length > 0) {
+      const akunNodes = makDB.filter(n => n.type?.toUpperCase() === 'AKUN');
+      for (const node of akunNodes) {
+        const parts = [];
+        let curr = node;
+        while(curr) {
+          if (curr.kode) parts.unshift(curr.kode);
+          curr = makDB.find(n => n.id === curr.parentId);
+        }
+        if (parts.join(' ') === makString) {
+          return node.id;
+        }
+      }
+    }
+    return '';
+  }, [akunNodeId, makString, makDB]);
+
+  // Get Item nodes from MAK (children of the selected Akun)
+  const itemOptions = (makDB && resolvedAkunNodeId) 
+    ? makDB.filter(n => n.parentId === resolvedAkunNodeId && n.type?.toUpperCase() === 'ITEM')
+    : [];
+
+  useEffect(() => {
+    // Jika form sudah pernah disimpan (isSaved = true), jangan auto-generate ulang
+    // meskipun rows kosong (karena mungkin user sengaja menghapusnya).
+    // Hanya render sesuai value yang ada dari database.
+    if (isSaved) {
+      if (Array.isArray(value) && JSON.stringify(value) !== JSON.stringify(rows)) {
+        setRows(value);
+      }
+      if (!hasInitialized) setHasInitialized(true);
+      return;
+    }
+
+    // --- Mode Auto-Generate (HANYA untuk form baru yang belum pernah disave) ---
+    // Jika ada value sementara, gunakan
+    if (Array.isArray(value) && value.length > 0) {
+      if (JSON.stringify(value) !== JSON.stringify(rows)) {
+        setRows(value);
+      }
+      if (!hasInitialized) setHasInitialized(true);
+    } 
+    // Jika value benar-benar kosong dan belum inisialisasi, auto-buatkan baris
+    else if (!hasInitialized && pegawaiList && pegawaiList.length > 0) {
+      const initialRows = pegawaiList.map((p, i) => {
+        const nipNama = p.split('\n')[0];
+        const nipOnly = p.includes('NIP.') ? p.split('NIP. ')[1].split('\n')[0] : '';
+        const label = nipOnly ? `${nipOnly} - ${nipNama}` : nipNama;
+        return {
+          id: Date.now() + i, // unique ID
+          pegawai: label,
+          detail: '',
+          itemNodeId: '',
+          akunNodeId: '',
+          tahunNodeId: '',
+          itemKode: '',
+          itemName: '',
+          uraian: '',
+          jumlah: ''
+        };
+      });
+      setRows(initialRows);
+      onChange(initialRows);
+      setHasInitialized(true);
+    }
+  }, [value, pegawaiList, hasInitialized, isSaved]);
+
+  const updateParent = (newRows) => {
+    setRows(newRows);
+    onChange(newRows);
+  };
+
+  const handleAdd = () => {
+    updateParent([...rows, { 
+      id: Date.now(), pegawai: '', detail: '', 
+      itemNodeId: '', akunNodeId: '', tahunNodeId: '',
+      itemKode: '', itemName: '',
+      uraian: '', jumlah: '' 
+    }]);
+  };
+
+  const handleRemove = (id) => {
+    updateParent(rows.filter(r => r.id !== id));
+  };
+
+  const handleChange = (id, field, val) => {
+    updateParent(rows.map(r => r.id === id ? { ...r, [field]: val } : r));
+  };
+
+  const handleDetailChange = (id, selectedValue) => {
+    // Check if it's a MAK Item (starts with "mak:") or a static option
+    if (selectedValue.startsWith('mak:')) {
+      const itemId = selectedValue.replace('mak:', '');
+      const itemNode = makDB?.find(n => n.id === itemId);
+      if (itemNode) {
+        updateParent(rows.map(r => r.id === id ? { 
+          ...r, 
+          detail: `${itemNode.kode || ''} - ${itemNode.name}`.trim().replace(/^- /, ''),
+          itemNodeId: itemId,
+          akunNodeId: resolvedAkunNodeId || '',
+          tahunNodeId: tahunNodeId || '',
+          itemKode: itemNode.kode || '',
+          itemName: itemNode.name || ''
+        } : r));
+        return;
+      }
+    }
+    // Static option or clear
+    updateParent(rows.map(r => r.id === id ? { 
+      ...r, 
+      detail: selectedValue,
+      itemNodeId: '',
+      akunNodeId: '',
+      tahunNodeId: '',
+      itemKode: '',
+      itemName: ''
+    } : r));
+  };
+
+  const formatRupiah = (angka) => {
+    if (!angka) return '';
+    const number_string = angka.toString().replace(/[^,\d]/g, '');
+    const split = number_string.split(',');
+    const sisa = split[0].length % 3;
+    let rupiah = split[0].substr(0, sisa);
+    const ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+    if (ribuan) {
+      const separator = sisa ? '.' : '';
+      rupiah += separator + ribuan.join('.');
+    }
+
+    rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+    return rupiah;
+  };
+
+  const parseRupiah = (string) => {
+    return string.replace(/[^,\d]/g, '');
+  };
+
+  // Helper to find the current dropdown value for a row
+  const getDropdownValue = (row) => {
+    if (row.itemNodeId) {
+      return `mak:${row.itemNodeId}`;
+    }
+    return row.detail || '';
+  };
+
+  return (
+    <div className="flex flex-col border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse text-xs">
+          <thead className="bg-slate-100 border-b border-slate-200">
+            <tr>
+              <th className="p-2 font-bold text-slate-600 text-center border-r">NAMA</th>
+              <th className="p-2 font-bold text-slate-600 text-center border-r">
+                Detail / Item MAK
+                {itemOptions.length > 0 && (
+                  <span className="ml-1 text-[9px] font-semibold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                    {itemOptions.length} Item
+                  </span>
+                )}
+              </th>
+              <th className="p-2 font-bold text-slate-600 text-center border-r">Jumlah (Rp)</th>
+              <th className="p-2 font-bold text-slate-600 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const selectedItem = row.itemNodeId ? makDB?.find(n => n.id === row.itemNodeId) : null;
+              const itemPagu = selectedItem ? (Number(selectedItem.pagu) || 0) : 0;
+
+              return (
+                <tr key={row.id} className="border-b border-slate-200 bg-white hover:bg-slate-50">
+                  <td className="p-2 border-r">
+                    <select
+                      value={row.pegawai}
+                      onChange={(e) => handleChange(row.id, 'pegawai', e.target.value)}
+                      disabled={disabled}
+                      className="w-full p-1.5 border rounded bg-white focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="">-- Pilih Pegawai --</option>
+                      {pegawaiList.map((p, i) => {
+                        const nipNama = p.split('\n')[0]; // Ambil baris pertama (Nama)
+                        const nipOnly = p.includes('NIP.') ? p.split('NIP. ')[1].split('\n')[0] : '';
+                        const label = nipOnly ? `${nipOnly} - ${nipNama}` : nipNama;
+                        return <option key={i} value={label}>{label}</option>;
+                      })}
+                    </select>
+                  </td>
+                  <td className="p-2 border-r">
+                    <select
+                      value={getDropdownValue(row)}
+                      onChange={(e) => handleDetailChange(row.id, e.target.value)}
+                      disabled={disabled}
+                      className={`w-full p-1.5 border rounded bg-white focus:ring-1 focus:ring-indigo-500 ${row.itemNodeId ? 'border-teal-300 bg-teal-50' : ''}`}
+                    >
+                      <option value="">-- Pilih Detail --</option>
+                      {/* MAK Item options (dynamic from hierarchy) */}
+                      {itemOptions.length > 0 && (
+                        <optgroup label="📦 Item MAK">
+                          {itemOptions.map(item => (
+                            <option key={item.id} value={`mak:${item.id}`}>
+                              {item.kode ? `${item.kode} - ` : ''}{item.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                    {/* Show item budget info */}
+                    {selectedItem && itemPagu > 0 && (
+                      <div className="mt-1 text-[9px] text-teal-600 flex items-center gap-1">
+                        <span>Pagu: Rp {new Intl.NumberFormat('id-ID').format(itemPagu)}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="p-2 border-r">
+                    <input
+                      type="text"
+                      value={formatRupiah(row.jumlah)}
+                      onChange={(e) => handleChange(row.id, 'jumlah', parseRupiah(e.target.value))}
+                      disabled={disabled}
+                      className="w-full p-1.5 border rounded focus:ring-1 focus:ring-indigo-500 text-right"
+                    />
+                  </td>
+                  <td className="p-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(row.id)}
+                      disabled={disabled}
+                      className="bg-rose-50 text-rose-600 px-2 py-1 rounded hover:bg-rose-100 disabled:opacity-50"
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan="5" className="p-4 text-center text-slate-400 italic">
+                  Belum ada detail transaksi.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {!disabled && (
+        <div className="p-2 bg-white border-t border-slate-200">
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors font-semibold text-xs"
+          >
+            + Tambah Baris Transaksi
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+

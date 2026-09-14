@@ -4,261 +4,323 @@ import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import {
-  FaClock, FaCheckCircle, FaFileSignature, FaInbox,
-  FaFolderOpen, FaBolt, FaChevronRight, FaRegFileAlt, FaCircleNotch, FaRegCircle
+  FaFolderOpen, FaPlus, FaSearch, FaFilter, FaRegCircle,
+  FaCheckCircle, FaCloudUploadAlt, FaLock, FaChevronRight
 } from 'react-icons/fa';
 import { useMyLPJTasks } from './LPJ/useLPJ';
-
-const STATUS_ICON = {
-  not_started: { icon: <FaRegCircle />, label: 'Belum Mulai',       bg: 'bg-slate-50',   text: 'text-slate-500',  border: 'border-slate-200' },
-  in_progress:  { icon: <FaCircleNotch className="animate-spin" />, label: 'Sedang Dikerjakan', bg: 'bg-amber-50',   text: 'text-amber-600',  border: 'border-amber-200' },
-};
 
 export default function Dashboard() {
   const { userData, userRole, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const isSuperAdmin = userRole === 'Super Admin' || userRole === 'Admin';
-
-  // ── Kotak Masuk (tugas dari template lama) ──────────────────────────────────
-  const [tasks, setTasks] = useState([]);
-  const [loadingTasks, setLoadingTasks] = useState(true);
-
-  useEffect(() => {
-    if (!userData) return;
-    let q;
-    if (isSuperAdmin) {
-      q = query(collection(db, 'document_tasks'), orderBy('createdAt', 'desc'));
-    } else {
-      q = query(
-        collection(db, 'document_tasks'),
-        where('assigneeUid', '==', userData.nip || userData.id),
-        orderBy('createdAt', 'desc')
-      );
-    }
-    const unsub = onSnapshot(q, (snapshot) => {
-      setTasks(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-      setLoadingTasks(false);
-    });
-    return unsub;
-  }, [userData, isSuperAdmin]);
-
+  
   // ── Tugas LPJ untuk user ini ────────────────────────────────────────────────
   const { tasks: lpjTasks, loading: loadingLpj } = useMyLPJTasks(currentUser?.uid);
 
-  const pendingTasks    = tasks.filter((t) => t.status === 'pending');
-  const completedTasks  = tasks.filter((t) => t.status === 'completed');
-
-  const handleExecuteTask = (task) => {
-    navigate(`/surat-editor/tulis/${task.targetTemplateId}`, {
-      state: { taskId: task.id, prefillData: task.prefillData },
-    });
+  // Status mapping
+  const statusCounts = {
+    baru: lpjTasks.filter(t => t.status === 'not_started').length,
+    draft: lpjTasks.filter(t => t.status === 'in_progress').length,
+    selesai: lpjTasks.filter(t => t.status === 'completed').length,
   };
+  const totalTasks = lpjTasks.length || 1;
+
+  // Tabs for LPJ
+  const [activeTab, setActiveTab] = useState('semua');
+  
+  const filteredTasks = lpjTasks.filter(t => {
+    if (activeTab === 'perjadin') return t.kategori === 'perjadin'; // Assumes 'kategori' field exists, fallback to all if none
+    if (activeTab === 'non_perjadin') return t.kategori === 'non_perjadin';
+    return true;
+  });
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-8">
-      <div className="max-w-5xl mx-auto">
-
-        {/* ── Greeting ── */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">
-            Selamat datang{userData?.nama ? `, ${userData.nama.split(' ')[0]}` : ''}!
-          </h1>
-          <p className="text-slate-500 font-medium text-sm mt-1">
-            {isSuperAdmin
-              ? 'Pantau seluruh tugas dan paket LPJ yang sedang berjalan.'
-              : 'Berikut adalah tugas dokumen yang perlu Anda selesaikan.'}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* ── Kolom Kiri: Tugas Utama ── */}
-          <div className="lg:col-span-2 space-y-8">
-
-            {/* ── SECTION: Tugas LPJ ── */}
-            <div>
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <FaFolderOpen className="text-slate-400" />
-                Tugas Dokumen LPJ Anda
-                {lpjTasks.length > 0 && (
-                  <span className="bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                    {lpjTasks.length}
-                  </span>
-                )}
-              </h2>
-
-              {loadingLpj ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 h-20 animate-pulse" />
-                  ))}
-                </div>
-              ) : lpjTasks.length === 0 ? (
-                <div className="bg-white border border-slate-200 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center text-slate-400">
-                  <FaFolderOpen size={32} className="mb-3 opacity-20" />
-                  <p className="font-medium text-sm">Tidak ada tugas dokumen LPJ yang menunggu.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {lpjTasks.map((task) => {
-                    const cfg = STATUS_ICON[task.status] || STATUS_ICON.not_started;
-                    return (
-                      <div
-                        key={`${task.packId}-${task.id}`}
-                        className={`group bg-white border rounded-xl p-5 cursor-pointer hover:border-slate-400 hover:shadow-sm transition-all ${cfg.border} relative overflow-hidden`}
-                        onClick={() => navigate(`/lpj/${task.packId}`)}
-                      >
-                        <div className="absolute top-0 left-0 w-1 h-full bg-slate-800 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0 mt-0.5">
-                              <FaRegFileAlt size={16} />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
-                                  {task.kode}
-                                </span>
-                                <span className={`flex items-center gap-1.5 text-[10px] font-bold ${cfg.text}`}>
-                                  {cfg.icon} {cfg.label}
-                                </span>
-                              </div>
-                              <p className="font-bold text-slate-800 text-sm leading-snug">{task.surat_nama}</p>
-                              <p className="text-xs text-slate-400 mt-1">{task.phase_label}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 self-center">
-                            {task.status === 'not_started' && (
-                              <span className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 bg-slate-800 text-white rounded-lg group-hover:bg-slate-900 transition-colors">
-                                Mulai
-                              </span>
-                            )}
-                            {task.status === 'in_progress' && (
-                              <span className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 bg-amber-100 text-amber-700 rounded-lg group-hover:bg-amber-200 transition-colors">
-                                Lanjutkan
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 transition-colors">
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-4 gap-6">
+        
+        {/* Main Content (Left 3 Columns) */}
+        <div className="xl:col-span-3 space-y-6">
+          
+          {/* Hero Card */}
+          <div className="bg-[#1e293b] rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+            <div className="relative z-10">
+              <p className="text-amber-500 font-bold text-[11px] uppercase tracking-widest mb-3">
+                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-2">
+                Selamat datang kembali, {userData?.nama ? userData.nama.split(' ')[0] : (currentUser?.email?.split('@')[0] || 'Pengguna')}
+              </h1>
+              <p className="text-slate-400 text-sm max-w-md">
+                Segera selesaikan SPBy dengan tepat agar istirahat lebih cepat.
+              </p>
             </div>
-
-            {/* ── SECTION: Kotak Masuk (Tugas Template Lama) ── */}
-            {(pendingTasks.length > 0 || isSuperAdmin) && (
-              <div>
-                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <FaClock className="text-slate-400" />
-                  Kotak Masuk ({pendingTasks.length})
-                </h2>
-
-                {loadingTasks ? (
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 h-24 animate-pulse" />
-                ) : pendingTasks.length === 0 ? (
-                  <div className="bg-white border border-slate-200 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center text-slate-400">
-                    <FaInbox size={32} className="mb-3 opacity-20" />
-                    <p className="font-medium text-sm">Tidak ada tugas yang menunggu.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {pendingTasks.map((task) => (
-                      <div key={task.id} className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 hover:border-slate-400 transition-colors relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-amber-400" />
-                        <div className="flex justify-between items-start gap-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
-                                Tugas Baru
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {new Date(task.createdAt).toLocaleDateString('id-ID')}
-                              </span>
-                            </div>
-                            <h3 className="font-bold text-slate-800 text-base mb-1">Buat Dokumen Lanjutan</h3>
-                            <p className="text-sm text-slate-600 mb-2">
-                              Berdasarkan: <strong>{task.sourceDokumenNama}</strong><br />
-                              Nomor Induk: <span className="font-mono text-xs bg-slate-50 px-1 py-0.5 rounded border border-slate-100">{task.sourceDokumenNomor}</span>
-                            </p>
-                            {isSuperAdmin && (
-                              <p className="text-[10px] text-slate-600 font-semibold bg-slate-50 inline-block px-2 py-1 rounded border border-slate-100">
-                                Ditugaskan ke: {task.assigneeName || task.assigneeUid}
-                              </p>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => handleExecuteTask(task)}
-                            className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 transition-colors shrink-0 shadow-sm"
-                          >
-                            <FaFileSignature size={12} /> Kerjakan
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="relative z-10 shrink-0">
+              <button 
+                onClick={() => navigate('/lpj')}
+                className="bg-white hover:bg-slate-50 text-slate-800 rounded-2xl p-3 pr-8 flex items-center gap-5 transition-all shadow-lg hover:shadow-xl active:scale-95"
+              >
+                <div className="w-14 h-14 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-inner">
+                  <FaPlus size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-extrabold text-lg leading-none">Buat LPJ</p>
+                  <p className="text-xs font-medium text-slate-500 mt-1.5">Buat SPBy baru</p>
+                </div>
+              </button>
+            </div>
           </div>
 
-          {/* ── Kolom Kanan: Riwayat + Shortcut ── */}
-          <div className="space-y-6">
+          {/* Status Berkas */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors">
+            <h2 className="font-bold text-slate-800 dark:text-slate-200 text-lg mb-6">Status Berkas</h2>
+            
+            {/* Progress Bar Segmented */}
+            <div className="flex h-3 w-full rounded-full overflow-hidden mb-4 bg-slate-100 dark:bg-slate-800">
+              <div style={{ width: `${(statusCounts.baru / totalTasks) * 100}%` }} className="bg-amber-400 transition-all duration-500"></div>
+              <div style={{ width: `${(statusCounts.draft / totalTasks) * 100}%` }} className="bg-blue-500 border-l border-white dark:border-slate-900 transition-all duration-500"></div>
+              <div style={{ width: `${(statusCounts.selesai / totalTasks) * 100}%` }} className="bg-emerald-500 border-l border-white dark:border-slate-900 transition-all duration-500"></div>
+            </div>
 
-            {/* Shortcut: Buat Pack Baru */}
-            <div className="bg-slate-800 rounded-xl p-6 text-white shadow-sm relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 opacity-5">
-                <FaFolderOpen size={120} />
+            {/* Legend */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+                <span className="text-slate-500 dark:text-slate-400">Baru <span className="font-bold text-slate-800 dark:text-slate-200 ml-1">{statusCounts.baru}</span></span>
               </div>
-              <div className="relative z-10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Mulai Sekarang</p>
-                <p className="font-bold text-lg leading-snug mb-4">Buat Paket LPJ Baru</p>
-                <div className="flex flex-col gap-2.5">
-                  <button
-                    onClick={() => navigate('/lpj')}
-                    className="w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    <FaFolderOpen size={13} /> Perjalanan Dinas
-                  </button>
-                  <button
-                    onClick={() => navigate('/lpj')}
-                    className="w-full border border-white/20 hover:bg-white/5 text-white text-xs font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    <FaRegFileAlt size={13} /> Non Perjalanan
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                <span className="text-slate-500 dark:text-slate-400">Draft <span className="font-bold text-slate-800 dark:text-slate-200 ml-1">{statusCounts.draft}</span></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                <span className="text-slate-500 dark:text-slate-400">Selesai <span className="font-bold text-slate-800 dark:text-slate-200 ml-1">{statusCounts.selesai}</span></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Berkas LPJ Saya */}
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
+              <div>
+                <h2 className="font-bold text-slate-800 dark:text-slate-200 text-lg">Berkas LPJ Saya</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Berkas yang Anda buat sendiri</p>
+              </div>
+              <button 
+                onClick={() => navigate('/lpj')}
+                className="text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
+              >
+                Lihat semua &gt;
+              </button>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm transition-colors">
+              {/* Toolbar */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="relative flex-1 max-w-md">
+                  <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Cari nama kegiatan atau nomor LPJ..." 
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full py-2.5 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="bg-slate-50 dark:bg-slate-950 p-1 rounded-full border border-slate-200 dark:border-slate-800 flex items-center text-sm font-medium">
+                    <button 
+                      onClick={() => setActiveTab('semua')}
+                      className={`px-4 py-1.5 rounded-full transition-colors ${activeTab === 'semua' ? 'bg-[#1e293b] text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                    >
+                      Semua
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('perjadin')}
+                      className={`px-4 py-1.5 rounded-full transition-colors ${activeTab === 'perjadin' ? 'bg-[#1e293b] text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                    >
+                      Perjadin
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('non_perjadin')}
+                      className={`px-4 py-1.5 rounded-full transition-colors ${activeTab === 'non_perjadin' ? 'bg-[#1e293b] text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                    >
+                      Non Perjadin
+                    </button>
+                  </div>
+                  <button className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full py-2 px-4 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <FaFilter size={12} /> Filter
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* Riwayat Selesai */}
-            <div>
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <FaCheckCircle className="text-emerald-500" /> Riwayat Selesai
-              </h2>
-              {completedTasks.length === 0 ? (
-                <div className="text-sm text-slate-400 italic">Belum ada tugas selesai.</div>
+              {/* List LPJ */}
+              {loadingLpj ? (
+                <div className="space-y-4">
+                  {[1,2].map(i => <div key={i} className="h-32 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />)}
+                </div>
+              ) : filteredTasks.length === 0 ? (
+                <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                  <FaFolderOpen size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400 font-medium">Belum ada berkas LPJ</p>
+                </div>
               ) : (
-                 <div className="space-y-3">
-                  {completedTasks.slice(0, 8).map((task) => (
-                    <div key={task.id} className="bg-white border border-slate-200 rounded-xl p-4 opacity-80 hover:opacity-100 transition-opacity">
-                      <div className="flex items-center gap-2 mb-2">
-                        <FaCheckCircle size={11} className="text-emerald-500" />
-                        <span className="text-[10px] font-bold text-slate-500">
-                          {task.completedAt ? new Date(task.completedAt).toLocaleDateString('id-ID') : '-'}
+                <div className="space-y-4">
+                  {filteredTasks.map(task => (
+                    <div 
+                      key={task.id} 
+                      onClick={() => navigate(`/lpj/${task.packId}`)}
+                      className="group border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer relative overflow-hidden bg-white dark:bg-slate-900"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
+                          {task.kategori === 'non_perjadin' ? 'Non Perjadin' : 'Perjadin'}
                         </span>
+                        
+                        {task.status === 'completed' && (
+                          <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> Selesai
+                          </span>
+                        )}
+                        {task.status === 'in_progress' && (
+                          <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Draft
+                          </span>
+                        )}
+                        {task.status === 'not_started' && (
+                          <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div> Baru
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Dokumen lanjutan dari <strong className="text-slate-800">{task.sourceDokumenNama}</strong> berhasil diselesaikan.
-                      </p>
-                      {isSuperAdmin && (
-                        <p className="text-[10px] font-bold mt-1.5 text-slate-400">Oleh: {task.assigneeName}</p>
-                      )}
+
+                      <p className="text-[10px] text-slate-400 mb-1">{task.kode || 'LPJ - Baru'}</p>
+                      <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {task.surat_nama || 'Dokumen LPJ'}
+                      </h3>
+                      
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-5">
+                        <span>Dibuat {new Date(task.createdAt || Date.now()).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year:'numeric'})}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Rp {task.amount || '0'}</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className={`h-full ${task.status === 'completed' ? 'bg-emerald-500' : 'bg-blue-600'} w-full`}></div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 shrink-0">Tahap Selesai</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar (Aside) */}
+        <div className="space-y-6">
+          
+          {/* Perlu Dilengkapi */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors">
+            <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-1">Perlu Dilengkapi</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">2 berkas perlu ditindaklanjuti</p>
+
+            <div className="space-y-4">
+              {/* Dummy Item 1 */}
+              <div className="flex items-start gap-3 cursor-pointer group">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0"></div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-[10px] text-slate-400">LPJ-2026-0003</p>
+                    <FaChevronRight size={10} className="text-slate-300 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors" />
+                  </div>
+                  <p className="font-bold text-sm text-slate-700 dark:text-slate-200 leading-snug group-hover:text-amber-600 transition-colors">
+                    Laporan Koordinasi Layanan Keimigrasian
+                  </p>
+                  <p className="text-[10px] mt-1.5 text-slate-500">
+                    <span className="font-bold text-amber-600 dark:text-amber-500">Kurang 4 tahap</span> · baru 1/5 selesai
+                  </p>
+                </div>
+              </div>
+
+              {/* Dummy Item 2 */}
+              <div className="flex items-start gap-3 cursor-pointer group">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0"></div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-[10px] text-slate-400">LPJ-2026-0006</p>
+                    <FaChevronRight size={10} className="text-slate-300 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors" />
+                  </div>
+                  <p className="font-bold text-sm text-slate-700 dark:text-slate-200 leading-snug group-hover:text-amber-600 transition-colors">
+                    Sosialisasi Layanan Paspor di Kecamatan Gerokgak
+                  </p>
+                  <p className="text-[10px] mt-1.5 text-slate-500">
+                    <span className="font-bold text-amber-600 dark:text-amber-500">Menunggu Bendahara</span> · 4/5 selesai
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Aktivitas Terbaru */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors">
+            <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-5">Aktivitas Terbaru</h3>
+            
+            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-3.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
+              
+              {/* Activity Item 1 */}
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="absolute left-0 w-7 h-7 rounded-full bg-blue-50 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-blue-500 z-10 shrink-0">
+                  <FaCloudUploadAlt size={12} />
+                </div>
+                <div className="pl-10">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Anda mengunggah <strong>Kuitansi & Bukti Transportasi</strong> ke <span className="font-semibold text-slate-800 dark:text-white">LPJ-2026-0001</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">2 jam lalu</p>
+                </div>
+              </div>
+
+              {/* Activity Item 2 */}
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="absolute left-0 w-7 h-7 rounded-full bg-emerald-50 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-emerald-500 z-10 shrink-0">
+                  <FaCheckCircle size={12} />
+                </div>
+                <div className="pl-10">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Anda menandai <span className="font-semibold text-slate-800 dark:text-white">LPJ-2026-0002</span> sebagai <strong>Selesai</strong>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">Kemarin, 09:15</p>
+                </div>
+              </div>
+
+              {/* Activity Item 3 */}
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="absolute left-0 w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-slate-500 z-10 shrink-0">
+                  <FaLock size={10} />
+                </div>
+                <div className="pl-10">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Anda membuat berkas baru <span className="font-semibold text-slate-800 dark:text-white">LPJ-2026-0006</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">Kemarin, 08:00</p>
+                </div>
+              </div>
+              
+              {/* Activity Item 4 */}
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="absolute left-0 w-7 h-7 rounded-full bg-blue-50 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-blue-500 z-10 shrink-0">
+                  <FaCloudUploadAlt size={12} />
+                </div>
+                <div className="pl-10">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Anda mengunggah <strong>SPT</strong> untuk <span className="font-semibold text-slate-800 dark:text-white">LPJ-2026-0006</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">2 hari lalu</p>
+                </div>
+              </div>
+
             </div>
           </div>
 

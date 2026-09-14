@@ -8,8 +8,8 @@
 
 import { useState, useEffect } from 'react';
 import {
-  collectionGroup, collection, doc, addDoc, updateDoc, onSnapshot,
-  query, where, orderBy, serverTimestamp, writeBatch, getDocs,
+  collectionGroup, collection, doc, addDoc, setDoc, updateDoc, onSnapshot,
+  query, where, orderBy, serverTimestamp, writeBatch, getDocs, runTransaction
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { generateSuratItems, PERJADIN_PHASES } from './packTemplates';
@@ -181,7 +181,32 @@ export async function createLPJPack(data) {
     age_days: 0,
   };
 
-  const packRef = await addDoc(collection(db, 'lpj_packs'), {
+  // Generate Sequential ID
+  const now = new Date();
+  const year = now.getFullYear().toString();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  
+  const counterRef = doc(db, 'counters', `lpj_${year}`);
+  let newPackId = '';
+
+  await runTransaction(db, async (transaction) => {
+    const counterDoc = await transaction.get(counterRef);
+    let nextSeq = 1;
+    if (counterDoc.exists()) {
+      nextSeq = (counterDoc.data().count || 0) + 1;
+      transaction.update(counterRef, { count: nextSeq });
+    } else {
+      transaction.set(counterRef, { count: 1 });
+    }
+    
+    const seqString = nextSeq.toString().padStart(4, '0');
+    newPackId = `LPJ-${year}-${month}-${seqString}`;
+  });
+
+  const packRef = doc(db, 'lpj_packs', newPackId);
+
+  await setDoc(packRef, {
+    id: newPackId,
     type,
     judul,
     perihal,
@@ -198,14 +223,14 @@ export async function createLPJPack(data) {
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
     completed_at: null,
-    nomor_bundle: '',
+    nomor_bundle: newPackId,
   });
 
   // Batch write semua surat_items
   const batch = writeBatch(db);
   suratItems.forEach((item) => {
     const itemRef = doc(
-      collection(db, 'lpj_packs', packRef.id, 'surat_items'),
+      collection(db, 'lpj_packs', newPackId, 'surat_items'),
       item.id
     );
     batch.set(itemRef, {
@@ -216,7 +241,7 @@ export async function createLPJPack(data) {
   });
   await batch.commit();
 
-  return packRef.id;
+  return newPackId;
 }
 
 // ─── Operasi: Update Status Surat Item ───────────────────────────────────────
@@ -393,4 +418,44 @@ export async function syncOtherSPDsData(packId, currentItemId, formData, isCompl
   if (updatedCount > 0) {
     await batch.commit();
   }
+}
+
+// ─── Migrasi: Beri ID ke LPJ lama ─────────────────────────────────────────────
+export async function migrateMissingLPJIds() {
+  const packsRef = collection(db, 'lpj_packs');
+  const snap = await getDocs(packsRef);
+  
+  let migrated = 0;
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data();
+    if (!data.nomor_bundle || !data.nomor_bundle.startsWith('LPJ-')) {
+      // Perlu digenerate
+      const createdAt = data.created_at?.toDate ? data.created_at.toDate() : new Date();
+      const year = createdAt.getFullYear().toString();
+      const month = (createdAt.getMonth() + 1).toString().padStart(2, '0');
+      
+      const counterRef = doc(db, 'counters', `lpj_${year}`);
+      let newPackId = '';
+      
+      await runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        let nextSeq = 1;
+        if (counterDoc.exists()) {
+          nextSeq = (counterDoc.data().count || 0) + 1;
+          transaction.update(counterRef, { count: nextSeq });
+        } else {
+          transaction.set(counterRef, { count: 1 });
+        }
+        
+        const seqString = nextSeq.toString().padStart(4, '0');
+        newPackId = `LPJ-${year}-${month}-${seqString}`;
+      });
+      
+      await updateDoc(doc(db, 'lpj_packs', docSnap.id), {
+        nomor_bundle: newPackId
+      });
+      migrated++;
+    }
+  }
+  return migrated;
 }

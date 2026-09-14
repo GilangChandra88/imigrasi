@@ -143,9 +143,45 @@ export default function PackDetail({ packId, currentUser, isAdmin }) {
       alert("Definisi surat tidak ditemukan!");
       return;
     }
+    
+    let instanceData = {};
+
+    // Merge semua data dari item yang sudah ada agar variabel lintas dokumen tersedia
+    items.forEach(i => {
+      if (i.data) {
+        instanceData = { ...instanceData, ...i.data };
+      }
+    });
+
+    // Override dengan data item ini sendiri
+    if (item.data) {
+      instanceData = { ...instanceData, ...item.data };
+    }
+
+    // Phase 2 Child sync: Inject SPBY data dynamically
+    const isPhase2Child = [
+      'nota-dinas', 'surat-perintah-bayar', 'rincian-spby', 
+      'rincian-perjalanan-tugas', 'sptjm-pelaksana', 'nominatif', 'kwitansi'
+    ].includes(item.definition_id);
+
+    if (isPhase2Child) {
+      const spbyItem = items.find(i => i.definition_id === 'spby');
+      if (spbyItem && spbyItem.data) {
+        instanceData = { ...instanceData, ...spbyItem.data };
+      }
+    }
+
+    // Inject pack info
+    instanceData.nomor_bundle = pack.nomor_bundle;
+
+    if (item._filterPegawai && Array.isArray(instanceData.detail_transaksi)) {
+      instanceData.detail_transaksi = instanceData.detail_transaksi.filter(r => r.pegawai === item._filterPegawai);
+    }
+
     setPreviewItem({
       ...suratDef,
-      instanceData: item.data || {}
+      instanceData,
+      _packItem: item
     });
   };
 
@@ -164,9 +200,16 @@ export default function PackDetail({ packId, currentUser, isAdmin }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             {/* Badge tipe */}
-            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border mb-2 bg-slate-100 text-slate-600 border-slate-200`}>
-              {packType?.icon} {packType?.label}
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              {pack.nomor_bundle && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
+                  {pack.nomor_bundle}
+                </span>
+              )}
+              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border bg-slate-100 text-slate-600 border-slate-200`}>
+                {packType?.icon} {packType?.label}
+              </span>
+            </div>
             <h1 className="text-xl font-bold text-slate-800">{pack.judul}</h1>
             <p className="text-sm text-slate-500 mt-0.5">{pack.perihal}</p>
             {pack.tujuan && <p className="text-xs text-slate-400 mt-0.5 font-semibold">{pack.tujuan}</p>}
@@ -275,23 +318,54 @@ export default function PackDetail({ packId, currentUser, isAdmin }) {
                 </button>
 
                 {/* Phase Items */}
-                {!isCollapsed && (
-                  <div className="border-t border-slate-100 divide-y divide-slate-50">
-                    {phase.items.map((item) => (
-                      <SuratItemRow
-                        key={item.id}
-                        item={item}
-                        isAdmin={isAdmin}
-                        isUpdating={updating === item.id}
-                        currentUserUid={currentUser.uid}
-                        onStatusChange={handleStatusChange}
-                        packId={packId}
-                        navigate={navigate}
-                        onPreview={() => handlePreview(item)}
-                      />
-                    ))}
-                  </div>
-                )}
+                  {!isCollapsed && (
+                    <div className="border-t border-slate-100 divide-y divide-slate-50">
+                      {phase.items.flatMap((item) => {
+                        if (['rincian-spby', 'rincian-perjalanan-tugas'].includes(item.definition_id)) {
+                          const spbyItem = items.find(i => i.definition_id === 'spby');
+                          if (spbyItem && spbyItem.data && Array.isArray(spbyItem.data.detail_transaksi)) {
+                            const pegawais = [...new Set(spbyItem.data.detail_transaksi.map(r => r.pegawai))].filter(Boolean);
+                            if (pegawais.length > 0) {
+                              return pegawais.map((p, pIdx) => {
+                                const subItem = { 
+                                  ...item, 
+                                  surat_nama: `${item.surat_nama} - ${p.split(' - ')[1] || p.split(' - ')[0]}`,
+                                  _filterPegawai: p 
+                                };
+                                return (
+                                  <SuratItemRow
+                                    key={`${item.id}-${pIdx}`}
+                                    item={subItem}
+                                    isAdmin={isAdmin}
+                                    isUpdating={updating === item.id}
+                                    currentUserUid={currentUser.uid}
+                                    onStatusChange={handleStatusChange}
+                                    packId={packId}
+                                    navigate={navigate}
+                                    onPreview={() => handlePreview(subItem)}
+                                  />
+                                );
+                              });
+                            }
+                          }
+                        }
+                        
+                        return (
+                          <SuratItemRow
+                            key={item.id}
+                            item={item}
+                            isAdmin={isAdmin}
+                            isUpdating={updating === item.id}
+                            currentUserUid={currentUser.uid}
+                            onStatusChange={handleStatusChange}
+                            packId={packId}
+                            navigate={navigate}
+                            onPreview={() => handlePreview(item)}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             );
           })}
@@ -314,6 +388,11 @@ function SuratItemRow({ item, isAdmin, isUpdating, currentUserUid, onStatusChang
   const status = STATUS_CONFIG[item.status] || STATUS_CONFIG.not_started;
   const isMyItem = item.assigned_to === currentUserUid;
   const canAct = isAdmin || isMyItem;
+
+  const isPhase2Child = [
+    'nota-dinas', 'surat-perintah-bayar', 'rincian-spby', 
+    'rincian-perjalanan-tugas', 'sptjm-pelaksana', 'nominatif', 'kwitansi'
+  ].includes(item.definition_id);
 
   return (
     <div className={`flex items-center gap-4 px-5 py-3 transition-colors ${
@@ -372,15 +451,15 @@ function SuratItemRow({ item, isAdmin, isUpdating, currentUserUid, onStatusChang
           {/* Preview Button */}
           <button
             onClick={onPreview}
-            disabled={!item.instance_id}
-            title={!item.instance_id ? "Isi form terlebih dahulu" : "Preview Surat"}
+            disabled={!isPhase2Child && !item.instance_id}
+            title={(!isPhase2Child && !item.instance_id) ? "Isi form terlebih dahulu" : "Preview Surat"}
             className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <FaEye size={10} /> Preview
           </button>
 
-          {/* Edit Button */}
-          {(item.status === 'not_started' || item.status === 'in_progress') && (
+          {/* Edit Button - HIDDEN for Phase 2 Children */}
+          {!isPhase2Child && (item.status === 'not_started' || item.status === 'in_progress') && (
             <button
               onClick={() => {
                 if (item.status === 'not_started') {
@@ -398,8 +477,8 @@ function SuratItemRow({ item, isAdmin, isUpdating, currentUserUid, onStatusChang
           {item.status === 'in_progress' && (
             <button
               onClick={() => onStatusChange(item, 'completed')}
-              disabled={!item.instance_id || item.is_data_complete === false}
-              title={!item.instance_id ? "Form belum diisi" : (item.is_data_complete === false ? "Isian form belum lengkap" : "Tandai Selesai")}
+              disabled={(!isPhase2Child && !item.instance_id) || item.is_data_complete === false}
+              title={(!isPhase2Child && !item.instance_id) ? "Form belum diisi" : (item.is_data_complete === false ? "Isian form belum lengkap" : "Tandai Selesai")}
               className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <FaCheck size={10} /> Selesai

@@ -19,6 +19,7 @@ const TYPE_COLORS = {
   "Kode surat 1": "text-emerald-700 bg-white shadow-sm border-emerald-200",
   "Kode surat 2": "text-amber-700 bg-white shadow-sm border-amber-200",
   "Kode surat 3": "text-orange-700 bg-white shadow-sm border-orange-200",
+  "Item": "text-teal-700 bg-white shadow-sm border-teal-200",
 };
 
 const WRAPPER_COLORS = {
@@ -39,6 +40,7 @@ const WRAPPER_COLORS = {
   "Kode surat 1": "bg-emerald-100 border-emerald-300",
   "Kode surat 2": "bg-amber-100 border-amber-300",
   "Kode surat 3": "bg-orange-100 border-orange-300",
+  "Item": "bg-teal-100 border-teal-300",
 };
 
 const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarchy, focusedPath }) => {
@@ -59,11 +61,15 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
   const [isAdding, setIsAdding] = useState(false);
   const [newKode, setNewKode] = useState("");
   const [newItemName, setNewItemName] = useState("");
+  const [newPagu, setNewPagu] = useState(0);
+  const [newLockPagu, setNewLockPagu] = useState(0);
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editKode, setEditKode] = useState(node.kode || "");
   const [editName, setEditName] = useState(node.name || "");
+  const [editPagu, setEditPagu] = useState(node.pagu || 0);
+  const [editLockPagu, setEditLockPagu] = useState(node.lockPagu || 0);
 
   const childType = hierarchy[levelIndex + 1];
   const children = allNodes.filter((n) => n.parentId === node.id);
@@ -71,9 +77,11 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
-    await onAdd(newKode.trim(), newItemName.trim(), childType, node.id);
+    await onAdd(newKode.trim(), newItemName.trim(), childType, node.id, Number(newPagu) || 0, Number(newLockPagu) || 0);
     setNewKode("");
     setNewItemName("");
+    setNewPagu(0);
+    setNewLockPagu(0);
     setIsAdding(false);
     setExpanded(true);
   };
@@ -81,7 +89,7 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
   const handleEdit = async (e) => {
     e.preventDefault();
     if (!editName.trim()) return;
-    await onEdit(node.id, editKode.trim(), editName.trim());
+    await onEdit(node.id, editKode.trim(), editName.trim(), Number(editPagu) || 0, Number(editLockPagu) || 0);
     setIsEditing(false);
   };
 
@@ -144,6 +152,20 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
               placeholder={`Keterangan...`}
               className="flex-1 min-w-0 text-xs py-1 px-2 bg-slate-50 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 font-medium"
             />
+            <input
+              type="number"
+              value={editPagu}
+              onChange={(e) => setEditPagu(e.target.value)}
+              placeholder="Pagu"
+              className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700 text-right"
+            />
+            <input
+              type="number"
+              value={editLockPagu}
+              onChange={(e) => setEditLockPagu(e.target.value)}
+              placeholder="Lock Pagu"
+              className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 text-right"
+            />
             <button type="submit" className="bg-indigo-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-indigo-700">
               OK
             </button>
@@ -161,6 +183,11 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
               {node.kode ? " - " : ""}
               <span className="font-medium">{node.name}</span>
             </span>
+            {node.pagu > 0 && (
+              <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shrink-0 ml-auto">
+                Rp {new Intl.NumberFormat('id-ID').format(node.pagu)}
+              </span>
+            )}
           </div>
         )}
 
@@ -218,6 +245,20 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
                   <FaLayerGroup size={14} />
                 </div>
                 <input
+                  type="number"
+                  value={newPagu}
+                  onChange={(e) => setNewPagu(e.target.value)}
+                  placeholder="Pagu"
+                  className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700 text-right"
+                />
+                <input
+                  type="number"
+                  value={newLockPagu}
+                  onChange={(e) => setNewLockPagu(e.target.value)}
+                  placeholder="Lock Pagu"
+                  className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 text-right"
+                />
+                <input
                   type="text"
                   autoFocus
                   value={newKode}
@@ -260,12 +301,16 @@ const MakNode = ({ node, allNodes, levelIndex, onAdd, onDelete, onEdit, hierarch
 export default function ViewTree({ nodes, hierarchy, onAdd, onDelete, onEdit, focusedPath }) {
   const [isAddingRoot, setIsAddingRoot] = useState(false);
   const [rootName, setRootName] = useState("");
+  const [rootPagu, setRootPagu] = useState(0);
+  const [rootLockPagu, setRootLockPagu] = useState(0);
 
   const handleAddRoot = async (e) => {
     e.preventDefault();
     if (!rootName.trim()) return;
-    await onAdd("", rootName.trim(), hierarchy[0], null);
+    await onAdd("", rootName.trim(), hierarchy[0], null, Number(rootPagu) || 0, Number(rootLockPagu) || 0);
     setRootName("");
+    setRootPagu(0);
+    setRootLockPagu(0);
     setIsAddingRoot(false);
   };
 
@@ -296,6 +341,20 @@ export default function ViewTree({ nodes, hierarchy, onAdd, onDelete, onEdit, fo
               <div className="text-indigo-400 mr-2 shrink-0">
                 <FaFolder size={16} />
               </div>
+              <input
+                type="number"
+                value={rootPagu}
+                onChange={(e) => setRootPagu(e.target.value)}
+                placeholder="Pagu"
+                className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700 text-right"
+              />
+              <input
+                type="number"
+                value={rootLockPagu}
+                onChange={(e) => setRootLockPagu(e.target.value)}
+                placeholder="Lock Pagu"
+                className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 text-right"
+              />
               <input
                 type="text"
                 autoFocus

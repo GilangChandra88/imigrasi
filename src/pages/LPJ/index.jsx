@@ -76,14 +76,40 @@ export default function LPJ() {
                 : 'Buat paket LPJ atau lihat paket yang Anda terlibat.'}
             </p>
           </div>
-          {/* Semua user bisa buat pack */}
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white text-sm font-bold
-                       rounded-lg hover:bg-slate-900 transition-colors shadow-sm"
-          >
-            <FaPlus size={12} /> Buat Paket LPJ
-          </button>
+          
+          <div className="flex gap-2">
+            {/* Tombol Migrasi untuk Admin */}
+            {canManage && (
+              <button
+                onClick={async () => {
+                  if (!window.confirm('Generate ID untuk semua LPJ lama yang belum punya ID?')) return;
+                  try {
+                    const { migrateMissingLPJIds } = await import('./useLPJ');
+                    const jml = await migrateMissingLPJIds();
+                    if (jml === 0) {
+                      alert('Tidak ada LPJ lama yang perlu diperbaiki (semuanya sudah punya ID atau format valid).');
+                    } else {
+                      alert(`Berhasil! ${jml} LPJ lama telah diberi ID berurutan.`);
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    alert('Gagal generate ID: ' + err.message);
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-lg hover:bg-indigo-200 transition-colors shadow-sm"
+              >
+                <FaBolt size={12} /> Perbaiki ID Lama
+              </button>
+            )}
+
+            {/* Semua user bisa buat pack */}
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-900 transition-colors shadow-sm"
+            >
+              <FaPlus size={12} /> Buat Paket LPJ
+            </button>
+          </div>
         </div>
 
         {/* Stats bar — hanya admin */}
@@ -226,6 +252,11 @@ function PackCard({ pack, currentUserUid, onOpen }) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
+            {pack.nomor_bundle && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded border bg-indigo-50 text-indigo-600 border-indigo-200">
+                {pack.nomor_bundle}
+              </span>
+            )}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${packType?.bgColor} ${packType?.textColor} ${packType?.borderColor}`}>
                {packType?.label}
             </span>

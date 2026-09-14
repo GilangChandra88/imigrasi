@@ -19,6 +19,7 @@ const TYPE_COLORS = {
   "Kode surat 1": "text-emerald-600 bg-emerald-50 border-emerald-200",
   "Kode surat 2": "text-amber-600 bg-amber-50 border-amber-200",
   "Kode surat 3": "text-orange-600 bg-orange-50 border-orange-200",
+  "Item": "text-teal-600 bg-teal-50 border-teal-200",
 };
 
 export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit, focusedPath }) {
@@ -39,10 +40,14 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
   const [isAdding, setIsAdding] = useState(false);
   const [newKode, setNewKode] = useState("");
   const [newItemName, setNewItemName] = useState("");
+  const [newPagu, setNewPagu] = useState(0);
+  const [newLockPagu, setNewLockPagu] = useState(0);
 
   const [editingNodeId, setEditingNodeId] = useState(null);
   const [editKode, setEditKode] = useState("");
   const [editName, setEditName] = useState("");
+  const [editPagu, setEditPagu] = useState(0);
+  const [editLockPagu, setEditLockPagu] = useState(0);
 
   const parentId = currentPath.length > 0 ? currentPath[currentPath.length - 1].id : null;
   const currentLevelIndex = currentPath.length;
@@ -53,9 +58,11 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
-    await onAdd(newKode.trim(), newItemName.trim(), childType, parentId);
+    await onAdd(newKode.trim(), newItemName.trim(), childType, parentId, Number(newPagu) || 0, Number(newLockPagu) || 0);
     setNewKode("");
     setNewItemName("");
+    setNewPagu(0);
+    setNewLockPagu(0);
     setIsAdding(false);
   };
 
@@ -64,13 +71,15 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
     setEditingNodeId(node.id);
     setEditKode(node.kode || "");
     setEditName(node.name || "");
+    setEditPagu(node.pagu || 0);
+    setEditLockPagu(node.lockPagu || 0);
   };
 
   const handleEditSubmit = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
     if (!editName.trim()) return;
-    await onEdit(id, editKode.trim(), editName.trim());
+    await onEdit(id, editKode.trim(), editName.trim(), Number(editPagu) || 0, Number(editLockPagu) || 0);
     setEditingNodeId(null);
   };
 
@@ -134,6 +143,20 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
       {isAdding && childType && (
         <div className="p-4 bg-indigo-50 border-b border-indigo-100">
           <form onSubmit={handleAdd} className="flex gap-3 max-w-2xl items-center">
+            <input
+              type="number"
+              value={newPagu}
+              onChange={(e) => setNewPagu(e.target.value)}
+              placeholder="Pagu"
+              className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700 text-right"
+            />
+            <input
+              type="number"
+              value={newLockPagu}
+              onChange={(e) => setNewLockPagu(e.target.value)}
+              placeholder="Lock Pagu"
+              className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 text-right"
+            />
             <input
               type="text"
               autoFocus
@@ -204,6 +227,20 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
                           placeholder="Keterangan..."
                           className="flex-1 p-1.5 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
                         />
+                        <input
+                          type="number"
+                          value={editPagu}
+                          onChange={(e) => setEditPagu(e.target.value)}
+                          placeholder="Pagu"
+                          className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700 text-right"
+                        />
+                        <input
+                          type="number"
+                          value={editLockPagu}
+                          onChange={(e) => setEditLockPagu(e.target.value)}
+                          placeholder="Lock Pagu"
+                          className="w-28 shrink-0 text-sm py-1.5 px-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 text-right"
+                        />
                       </div>
                       <div className="flex gap-2">
                         <button type="submit" className="flex-1 bg-indigo-600 text-white text-xs py-1.5 rounded-md hover:bg-indigo-700">Simpan</button>
@@ -219,6 +256,11 @@ export default function ViewExplorer({ nodes, hierarchy, onAdd, onDelete, onEdit
                           {node.kode ? " - " : ""}
                           <span className="font-medium">{node.name}</span>
                         </p>
+                        {node.pagu > 0 && (
+                          <p className="text-[10px] font-semibold text-emerald-600 mt-1">
+                            Pagu: Rp {new Intl.NumberFormat('id-ID').format(node.pagu)}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
