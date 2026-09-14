@@ -61,18 +61,7 @@ export default function Login() {
       {/* Core UI */}
       <div className="relative z-10 w-full max-w-md flex flex-col items-center">
         
-        {/* Text Header */}
-        <div className="text-center mb-10 fade-in-up">
-           <div className="w-16 h-16 mx-auto bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(99,102,241,0.3)] border border-indigo-500/30 mb-5">
-             <FaLock />
-           </div>
-           <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-cyan-400 tracking-widest uppercase mb-2 drop-shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-             e-Persuratan
-           </h1>
-           <p className="text-indigo-300 text-xs sm:text-sm tracking-[0.2em] uppercase font-semibold opacity-80">
-             Portal Autentikasi Imigrasi
-           </p>
-        </div>
+
 
         {/* Login Card (Glassmorphism) */}
         <div className="w-full bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-indigo-500/30 p-8 sm:p-10 fade-in-up" style={{ animationDelay: '0.2s', opacity: 0 }}>
